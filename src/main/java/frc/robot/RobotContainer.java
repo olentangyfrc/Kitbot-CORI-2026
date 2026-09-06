@@ -56,7 +56,6 @@ public class RobotContainer {
                 new ModuleIOTalonFX(TunerConstants.BackLeft),
                 new ModuleIOTalonFX(TunerConstants.BackRight));
 
-
         // The ModuleIOTalonFXS implementation provides an example implementation for
         // TalonFXS controller connected to a CANdi with a PWM encoder. The
         // implementations
@@ -101,8 +100,6 @@ public class RobotContainer {
         break;
     }
 
-
-
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
 
@@ -133,7 +130,6 @@ public class RobotContainer {
     // controller.b().whileTrue(IntakeCommands.stopIntake(intake));
     // controller.x().whileTrue(IntakeCommands.ejectIntake(intake));
     // controller.y().whileTrue(IntakeCommands.setIntakePosition(intake, 90));
-
 
     // Lock to 0° when A button is held
 
