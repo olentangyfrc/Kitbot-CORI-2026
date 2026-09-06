@@ -16,9 +16,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.DriveCommands;
-import frc.robot.commands.IntakeCommands;
-import frc.robot.commands.SerializerCommands;
-import frc.robot.commands.ShooterCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -26,9 +23,6 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
-import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.serializer.Serializer;
-import frc.robot.subsystems.shooter.Shooter;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -40,9 +34,6 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   private final Drive drive;
-  private final Serializer serializer;
-  private final Shooter shooter;
-  private final Intake intake;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -65,9 +56,6 @@ public class RobotContainer {
                 new ModuleIOTalonFX(TunerConstants.BackLeft),
                 new ModuleIOTalonFX(TunerConstants.BackRight));
 
-        serializer = new Serializer();
-        intake = new Intake();
-        shooter = new Shooter();
 
         // The ModuleIOTalonFXS implementation provides an example implementation for
         // TalonFXS controller connected to a CANdi with a PWM encoder. The
@@ -98,9 +86,6 @@ public class RobotContainer {
                 new ModuleIOSim(TunerConstants.BackLeft),
                 new ModuleIOSim(TunerConstants.BackRight));
 
-        serializer = new Serializer();
-        intake = new Intake();
-        shooter = new Shooter();
         break;
 
       default:
@@ -113,15 +98,10 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {});
 
-        serializer = new Serializer();
-        intake = new Intake();
-        shooter = new Shooter();
         break;
     }
 
-    shooter.init();
-    serializer.init();
-    intake.init();
+
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
@@ -154,14 +134,6 @@ public class RobotContainer {
     // controller.x().whileTrue(IntakeCommands.ejectIntake(intake));
     // controller.y().whileTrue(IntakeCommands.setIntakePosition(intake, 90));
 
-    controller.rightTrigger().onTrue(ShooterCommands.spinUp(shooter));
-    controller.a().whileTrue(ShooterCommands.stop(shooter));
-    controller.y().whileTrue(SerializerCommands.startSerializer(serializer));
-    controller.x().whileTrue(SerializerCommands.stopSerializer(serializer));
-    controller.b().onTrue(IntakeCommands.startIntake(intake));
-    controller.x().whileTrue(IntakeCommands.stopIntake(intake));
-    controller.rightBumper().onTrue(ShooterCommands.setHoodAngle(shooter, Math.toRadians(47)));
-    controller.leftBumper().onTrue(ShooterCommands.setHoodAngle(shooter, Math.toRadians(2)));
 
     // Lock to 0° when A button is held
 
