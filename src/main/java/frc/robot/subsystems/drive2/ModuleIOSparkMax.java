@@ -33,13 +33,9 @@ public class ModuleIOSparkMax extends SubsystemBase {
 
     // change resetmode and persistmode later
     driveMotor.configure(
-        driveConfig,
-        ResetMode.kNoResetSafeParameters,
-        PersistMode.kNoPersistParameters);
+        driveConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
     steerMotor.configure(
-        steerConfig,
-        ResetMode.kNoResetSafeParameters,
-        PersistMode.kNoPersistParameters);
+        steerConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
     steerPIDController = new PIDController(0, 0, 0);
     steerPIDController.enableContinuousInput(-180, 180);
@@ -58,7 +54,8 @@ public class ModuleIOSparkMax extends SubsystemBase {
         optimized.speedMetersPerSecond
             * Math.cos(optimized.angle.getRadians() - encoderRotation2d.getRadians());
 
-    double steerOutput = steerPIDController.calculate(getEncoderRadians(), optimized.angle.getRadians());
+    double steerOutput =
+        steerPIDController.calculate(getEncoderRadians(), optimized.angle.getRadians());
     double driveOutput = optimized.speedMetersPerSecond;
 
     driveMotor.setVoltage(driveOutput);

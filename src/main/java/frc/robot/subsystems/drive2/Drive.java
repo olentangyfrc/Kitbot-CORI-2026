@@ -1,10 +1,9 @@
 package frc.robot.subsystems.drive2;
 
-import frc.robot.subsystems.drive2.ModuleIOSparkMax;
-
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.drive.ModuleIO;
 
 public class Drive extends SubsystemBase {
   // placeholder dimensions
@@ -22,6 +21,12 @@ public class Drive extends SubsystemBase {
     ModuleIOSparkMax frontRightModule = new ModuleIOSparkMax(22, 23, 1, 0.0);
     ModuleIOSparkMax backLeftModule = new ModuleIOSparkMax(24, 25, 2, 0.0);
     ModuleIOSparkMax backRightModule = new ModuleIOSparkMax(26, 27, 3, 0.0);
+
+    SwerveDriveKinematics kinematics =
+        new SwerveDriveKinematics(
+            frontLeftLocation, frontRightLocation, backLeftLocation, backRightLocation);
+
+    ChassisSpeeds chassisSpeeds = new ChassisSpeeds(0, 0, 0);
 
     
   }
