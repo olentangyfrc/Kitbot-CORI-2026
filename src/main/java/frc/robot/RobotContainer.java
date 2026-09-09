@@ -23,6 +23,7 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.shooter.Shooter;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -34,6 +35,7 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   private final Drive drive;
+  private final Shooter shooter;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -56,6 +58,7 @@ public class RobotContainer {
                 new ModuleIOTalonFX(TunerConstants.BackLeft),
                 new ModuleIOTalonFX(TunerConstants.BackRight));
 
+        shooter = new Shooter();
 
         // The ModuleIOTalonFXS implementation provides an example implementation for
         // TalonFXS controller connected to a CANdi with a PWM encoder. The
@@ -86,6 +89,8 @@ public class RobotContainer {
                 new ModuleIOSim(TunerConstants.BackLeft),
                 new ModuleIOSim(TunerConstants.BackRight));
 
+        shooter = new Shooter();
+
         break;
 
       default:
@@ -98,10 +103,12 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {});
 
+        shooter = new Shooter();
+
         break;
     }
 
-
+    shooter.init();
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
@@ -133,7 +140,7 @@ public class RobotContainer {
     // controller.b().whileTrue(IntakeCommands.stopIntake(intake));
     // controller.x().whileTrue(IntakeCommands.ejectIntake(intake));
     // controller.y().whileTrue(IntakeCommands.setIntakePosition(intake, 90));
-
+    // Add button bindings for the shooter
 
     // Lock to 0° when A button is held
 
