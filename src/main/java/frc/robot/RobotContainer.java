@@ -18,11 +18,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.drive.GyroIO;
-import frc.robot.subsystems.drive.GyroIOPigeon2;
-import frc.robot.subsystems.drive.ModuleIO;
-import frc.robot.subsystems.drive.ModuleIOSim;
-import frc.robot.subsystems.drive.ModuleIOTalonFX;
+
+
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -33,71 +30,67 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  */
 public class RobotContainer {
   // Subsystems
-  private final Drive drive;
+  private Drive drive;
+  
+    // Controller
+    private final CommandXboxController controller = new CommandXboxController(0);
+  
+    // Dashboard inputs
+    private final LoggedDashboardChooser<Command> autoChooser;
+  
+    /** The container for the robot. Contains subsystems, OI devices, and commands. */
+    public RobotContainer() {
+      switch (Constants.currentMode) {
+        case REAL:
+          // Real robot, instantiate hardware IO implementations
+          // ModuleIOTalonFX is intended for modules with TalonFX drive, TalonFX turn, and
+          // a CANcoder
+          drive =
+              new Drive();
+  
+  
+          // The ModuleIOTalonFXS implementation provides an example implementation for
+          // TalonFXS controller connected to a CANdi with a PWM encoder. The
+          // implementations
+          // of ModuleIOTalonFX, ModuleIOTalonFXS, and ModuleIOSpark (from the Spark
+          // swerve
+          // template) can be freely intermixed to support alternative hardware
+          // arrangements.
+          // Please see the AdvantageKit template documentation for more information:
+          // https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template#custom-module-implementations
+          //
+          // drive =
+          // new Drive(
+          // new GyroIOPigeon2(),
+          // new ModuleIOTalonFXS(TunerConstants.FrontLeft),
+          // new ModuleIOTalonFXS(TunerConstants.FrontRight),
+          // new ModuleIOTalonFXS(TunerConstants.BackLeft),
+          // new ModuleIOTalonFXS(TunerConstants.BackRight));
+          break;
+  
+        case SIM:
+          // Sim robot, instantiate physics sim IO implementations
+          drive = new Drive();
+          //     new Drive(
+          //         new GyroIO() {},
+          //         new ModuleIOSim(TunerConstants.FrontLeft),
+          //         new ModuleIOSim(TunerConstants.FrontRight),
+          //         new ModuleIOSim(TunerConstants.BackLeft),
+          //         new ModuleIOSim(TunerConstants.BackRight));
+  
+          // break;
+  
+        default:
+          // Replayed robot, disable IO implementations
+          drive =
+            new Drive();
+            //     new GyroIO() {},
+            //     new ModuleIO() {},
+            //     new ModuleIO() {},
+            //     new ModuleIO() {},
+            //     new ModuleIO() {});
 
-  // Controller
-  private final CommandXboxController controller = new CommandXboxController(0);
-
-  // Dashboard inputs
-  private final LoggedDashboardChooser<Command> autoChooser;
-
-  /** The container for the robot. Contains subsystems, OI devices, and commands. */
-  public RobotContainer() {
-    switch (Constants.currentMode) {
-      case REAL:
-        // Real robot, instantiate hardware IO implementations
-        // ModuleIOTalonFX is intended for modules with TalonFX drive, TalonFX turn, and
-        // a CANcoder
-        drive =
-            new Drive(
-                new GyroIOPigeon2(),
-                new ModuleIOTalonFX(TunerConstants.FrontLeft),
-                new ModuleIOTalonFX(TunerConstants.FrontRight),
-                new ModuleIOTalonFX(TunerConstants.BackLeft),
-                new ModuleIOTalonFX(TunerConstants.BackRight));
-
-        // The ModuleIOTalonFXS implementation provides an example implementation for
-        // TalonFXS controller connected to a CANdi with a PWM encoder. The
-        // implementations
-        // of ModuleIOTalonFX, ModuleIOTalonFXS, and ModuleIOSpark (from the Spark
-        // swerve
-        // template) can be freely intermixed to support alternative hardware
-        // arrangements.
-        // Please see the AdvantageKit template documentation for more information:
-        // https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template#custom-module-implementations
-        //
-        // drive =
-        // new Drive(
-        // new GyroIOPigeon2(),
-        // new ModuleIOTalonFXS(TunerConstants.FrontLeft),
-        // new ModuleIOTalonFXS(TunerConstants.FrontRight),
-        // new ModuleIOTalonFXS(TunerConstants.BackLeft),
-        // new ModuleIOTalonFXS(TunerConstants.BackRight));
-        break;
-
-      case SIM:
-        // Sim robot, instantiate physics sim IO implementations
-        drive =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIOSim(TunerConstants.FrontLeft),
-                new ModuleIOSim(TunerConstants.FrontRight),
-                new ModuleIOSim(TunerConstants.BackLeft),
-                new ModuleIOSim(TunerConstants.BackRight));
-
-        break;
-
-      default:
-        // Replayed robot, disable IO implementations
-        drive =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {});
-
-        break;
+        // break;
     }
 
     // Set up auto routines
@@ -121,6 +114,7 @@ public class RobotContainer {
             () -> controller.getLeftY(),
             () -> controller.getLeftX(),
             () -> -controller.getRightX()));
+  }
 
     // controller.a().whileTrue(SerializerCommands.startSerializer(serializer));
     // controller.x().whileTrue(SerializerCommands.stopSerializer(serializer));
@@ -146,16 +140,16 @@ public class RobotContainer {
     // controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
     // Reset gyro to 0° when B button is pressed
-    controller
-        .b()
-        .onTrue(
-            Commands.runOnce(
-                    () ->
-                        drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
-                    drive)
-                .ignoringDisable(true));
-  }
+  //   controller
+  //       .b()
+  //       .onTrue(
+  //           Commands.runOnce(
+  //                   () ->
+  //                       drive.setPose(
+  //                           new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
+  //                   drive)
+  //               .ignoringDisable(true));
+  // }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

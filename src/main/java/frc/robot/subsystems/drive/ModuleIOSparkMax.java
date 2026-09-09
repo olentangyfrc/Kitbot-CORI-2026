@@ -1,4 +1,4 @@
-package frc.robot.subsystems.drive2;
+package frc.robot.subsystems.drive;
 
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
@@ -7,6 +7,7 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -18,6 +19,11 @@ public class ModuleIOSparkMax extends SubsystemBase {
   private double offset;
 
   private PIDController steerPIDController;
+
+  // odometry stuff, need change
+  private double wheelRadius;
+  private double gearRatio;
+  private double encoderResolution;
 
   public ModuleIOSparkMax(
       int driveMotorCanId, int steerMotorCanId, int encoderId, double motorOffset) {
@@ -45,7 +51,7 @@ public class ModuleIOSparkMax extends SubsystemBase {
     return Math.toRadians(encoder.get()) + offset;
   }
 
-  public void set_state(SwerveModuleState state) {
+  public void setState(SwerveModuleState state) {
     Rotation2d encoderRotation2d = new Rotation2d(getEncoderRadians());
 
     var optimized = SwerveModuleState.optimize(state, encoderRotation2d);
@@ -60,5 +66,9 @@ public class ModuleIOSparkMax extends SubsystemBase {
 
     driveMotor.setVoltage(driveOutput);
     driveMotor.setVoltage(steerOutput);
+  }
+
+  public SwerveModulePosition getPosition() {
+    return new SwerveModulePosition((driveMotor.getEncoder().getPosition() * wheelRadius * Math.PI * 2 * gearRatio) / encoderResolution, Rotation2d.fromRadians(getEncoderRadians()));
   }
 }
