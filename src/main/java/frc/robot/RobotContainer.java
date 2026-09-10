@@ -7,19 +7,12 @@
 
 package frc.robot;
 
-import com.pathplanner.lib.auto.AutoBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.DriveCommands;
-import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
-
-
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -31,71 +24,68 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 public class RobotContainer {
   // Subsystems
   private Drive drive;
-  
-    // Controller
-    private final CommandXboxController controller = new CommandXboxController(0);
-  
-    // Dashboard inputs
-    private final LoggedDashboardChooser<Command> autoChooser;
-  
-    /** The container for the robot. Contains subsystems, OI devices, and commands. */
-    public RobotContainer() {
-      switch (Constants.currentMode) {
-        case REAL:
-          // Real robot, instantiate hardware IO implementations
-          // ModuleIOTalonFX is intended for modules with TalonFX drive, TalonFX turn, and
-          // a CANcoder
-          drive =
-              new Drive();
-  
-  
-          // The ModuleIOTalonFXS implementation provides an example implementation for
-          // TalonFXS controller connected to a CANdi with a PWM encoder. The
-          // implementations
-          // of ModuleIOTalonFX, ModuleIOTalonFXS, and ModuleIOSpark (from the Spark
-          // swerve
-          // template) can be freely intermixed to support alternative hardware
-          // arrangements.
-          // Please see the AdvantageKit template documentation for more information:
-          // https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template#custom-module-implementations
-          //
-          // drive =
-          // new Drive(
-          // new GyroIOPigeon2(),
-          // new ModuleIOTalonFXS(TunerConstants.FrontLeft),
-          // new ModuleIOTalonFXS(TunerConstants.FrontRight),
-          // new ModuleIOTalonFXS(TunerConstants.BackLeft),
-          // new ModuleIOTalonFXS(TunerConstants.BackRight));
-          break;
-  
-        case SIM:
-          // Sim robot, instantiate physics sim IO implementations
-          drive = new Drive();
-          //     new Drive(
-          //         new GyroIO() {},
-          //         new ModuleIOSim(TunerConstants.FrontLeft),
-          //         new ModuleIOSim(TunerConstants.FrontRight),
-          //         new ModuleIOSim(TunerConstants.BackLeft),
-          //         new ModuleIOSim(TunerConstants.BackRight));
-  
-          // break;
-  
-        default:
-          // Replayed robot, disable IO implementations
-          drive =
-            new Drive();
-            //     new GyroIO() {},
-            //     new ModuleIO() {},
-            //     new ModuleIO() {},
-            //     new ModuleIO() {},
-            //     new ModuleIO() {});
 
-        // break;
+  // Controller
+  private final CommandXboxController controller = new CommandXboxController(0);
+
+  // Dashboard inputs
+  private final LoggedDashboardChooser<Command> autoChooser;
+
+  /** The container for the robot. Contains subsystems, OI devices, and commands. */
+  public RobotContainer() {
+    switch (Constants.currentMode) {
+      case REAL:
+        // Real robot, instantiate hardware IO implementations
+        // ModuleIOTalonFX is intended for modules with TalonFX drive, TalonFX turn, and
+        // a CANcoder
+        drive = new Drive();
+
+        // The ModuleIOTalonFXS implementation provides an example implementation for
+        // TalonFXS controller connected to a CANdi with a PWM encoder. The
+        // implementations
+        // of ModuleIOTalonFX, ModuleIOTalonFXS, and ModuleIOSpark (from the Spark
+        // swerve
+        // template) can be freely intermixed to support alternative hardware
+        // arrangements.
+        // Please see the AdvantageKit template documentation for more information:
+        // https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template#custom-module-implementations
+        //
+        // drive =
+        // new Drive(
+        // new GyroIOPigeon2(),
+        // new ModuleIOTalonFXS(TunerConstants.FrontLeft),
+        // new ModuleIOTalonFXS(TunerConstants.FrontRight),
+        // new ModuleIOTalonFXS(TunerConstants.BackLeft),
+        // new ModuleIOTalonFXS(TunerConstants.BackRight));
+        break;
+
+      case SIM:
+        // Sim robot, instantiate physics sim IO implementations
+        drive = new Drive();
+        //     new Drive(
+        //         new GyroIO() {},
+        //         new ModuleIOSim(TunerConstants.FrontLeft),
+        //         new ModuleIOSim(TunerConstants.FrontRight),
+        //         new ModuleIOSim(TunerConstants.BackLeft),
+        //         new ModuleIOSim(TunerConstants.BackRight));
+
+        break;
+
+      default:
+        // Replayed robot, disable IO implementations
+        drive = new Drive();
+        //     new GyroIO() {},
+        //     new ModuleIO() {},
+        //     new ModuleIO() {},
+        //     new ModuleIO() {},
+        //     new ModuleIO() {});
+
+        break;
     }
 
     // Set up auto routines
-    autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
-
+    // autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+    autoChooser = null;
     // Configure the button bindings
     configureButtonBindings();
   }
@@ -111,35 +101,35 @@ public class RobotContainer {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> controller.getLeftY(),
-            () -> controller.getLeftX(),
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
   }
 
-    // controller.a().whileTrue(SerializerCommands.startSerializer(serializer));
-    // controller.x().whileTrue(SerializerCommands.stopSerializer(serializer));
-    // controller.y().whileTrue(SerializerCommands.reverseSerializer(serializer));
+  // controller.a().whileTrue(SerializerCommands.startSerializer(serializer));
+  // controller.x().whileTrue(SerializerCommands.stopSerializer(serializer));
+  // controller.y().whileTrue(SerializerCommands.reverseSerializer(serializer));
 
-    // controller.a().onTrue(IntakeCommands.startIntake(intake));
-    // controller.b().whileTrue(IntakeCommands.stopIntake(intake));
-    // controller.x().whileTrue(IntakeCommands.ejectIntake(intake));
-    // controller.y().whileTrue(IntakeCommands.setIntakePosition(intake, 90));
+  // controller.a().onTrue(IntakeCommands.startIntake(intake));
+  // controller.b().whileTrue(IntakeCommands.stopIntake(intake));
+  // controller.x().whileTrue(IntakeCommands.ejectIntake(intake));
+  // controller.y().whileTrue(IntakeCommands.setIntakePosition(intake, 90));
 
-    // Lock to 0° when A button is held
+  // Lock to 0° when A button is held
 
-    // controller
-    //     .a()
-    //     .whileTrue(
-    //         DriveCommands.joystickDriveAtAngle(
-    //             drive,
-    //             () -> controller.getLeftY(),
-    //             () -> controller.getLeftX(),
-    //             () -> Rotation2d.fromDegrees(180)));
+  // controller
+  //     .a()
+  //     .whileTrue(
+  //         DriveCommands.joystickDriveAtAngle(
+  //             drive,
+  //             () -> controller.getLeftY(),
+  //             () -> controller.getLeftX(),
+  //             () -> Rotation2d.fromDegrees(180)));
 
-    // // Switch to X pattern when X button is pressed
-    // controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+  // // Switch to X pattern when X button is pressed
+  // controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
-    // Reset gyro to 0° when B button is pressed
+  // Reset gyro to 0° when B button is pressed
   //   controller
   //       .b()
   //       .onTrue(
@@ -157,6 +147,7 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return autoChooser.get();
+    // return autoChooser.get();
+    return null;
   }
 }

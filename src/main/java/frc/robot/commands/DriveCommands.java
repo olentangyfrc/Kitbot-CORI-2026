@@ -1,37 +1,45 @@
 package frc.robot.commands;
 
-import java.util.function.DoubleSupplier;
-
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
+import java.util.function.DoubleSupplier;
 
 public class DriveCommands {
-    public static final double DEADBAND = 0.1;
+  public static final double DEADBAND = 0.1;
 
-    private DriveCommands() {}
-    
-    public static Command joystickDrive(Drive drive, DoubleSupplier x, DoubleSupplier y, DoubleSupplier omega) {
-        return Commands.run(
-            () -> {
-                double xspeed = MathUtil.applyDeadband(x.getAsDouble(), DEADBAND);
-                double yspeed = MathUtil.applyDeadband(y.getAsDouble(), DEADBAND);
-                double omegaspeed = MathUtil.applyDeadband(omega.getAsDouble(), DEADBAND);
+  private DriveCommands() {}
 
-                Math.copySign(xspeed * xspeed, xspeed);
-                Math.copySign(yspeed * yspeed, yspeed);
-                Math.copySign(omegaspeed * omegaspeed, omegaspeed);
+  public static Command joystickDrive(
+      Drive drive, DoubleSupplier x, DoubleSupplier y, DoubleSupplier omega) {
+    System.out.println("ran joystickdrive");
+    return Commands.run(
+        () -> {
+          double xspeed = MathUtil.applyDeadband(x.getAsDouble(), DEADBAND) * 3;
+          double yspeed = MathUtil.applyDeadband(y.getAsDouble(), DEADBAND) * 3;
+          double omegaspeed = MathUtil.applyDeadband(omega.getAsDouble(), DEADBAND) * 6;
 
-                ChassisSpeeds chassisSpeeds = new ChassisSpeeds(xspeed, yspeed, omegaspeed);
+          Math.copySign(xspeed * xspeed, xspeed);
+          Math.copySign(yspeed * yspeed, yspeed);
+          Math.copySign(omegaspeed * omegaspeed, omegaspeed);
 
-                drive.drive(chassisSpeeds);
-            },
+          ChassisSpeeds chassisSpeeds = new ChassisSpeeds(xspeed, yspeed, omegaspeed);
+          switch (Constants.currentMode) {
+            case REAL:
+              drive.drive(chassisSpeeds);
+              break;
+
+            case SIM:
+              drive.driveSim(chassisSpeeds);
+              break;
+
+            default:
+              break;
+          }
+        },
         drive);
-    }
+  }
 }

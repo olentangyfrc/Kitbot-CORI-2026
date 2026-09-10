@@ -69,6 +69,9 @@ public class ModuleIOSparkMax extends SubsystemBase {
   }
 
   public SwerveModulePosition getPosition() {
-    return new SwerveModulePosition((driveMotor.getEncoder().getPosition() * wheelRadius * Math.PI * 2 * gearRatio) / encoderResolution, Rotation2d.fromRadians(getEncoderRadians()));
+    return new SwerveModulePosition(
+        (driveMotor.getEncoder().getPosition() * wheelRadius * Math.PI * 2 * gearRatio)
+            / encoderResolution,
+        Rotation2d.fromRadians(getEncoderRadians()));
   }
 }
