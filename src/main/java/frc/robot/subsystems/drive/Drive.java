@@ -91,19 +91,6 @@ public class Drive extends SubsystemBase {
     Transform2d modTransform = new Transform2d(modX, modY, modOmega);
 
     robotPose = robotPose.plus(modTransform);
-
-    // fieldSpeeds = ChassisSpeeds.discretize(fieldSpeeds, 0.02);
-
-    // double newX = robotPose.getX() + fieldSpeeds.vxMetersPerSecond / 50;
-    // double newY = robotPose.getY() + fieldSpeeds.vyMetersPerSecond / 50;
-    // Rotation2d newOmega =
-    //     Rotation2d.fromRadians(
-    //         robotPose.getRotation().getRadians() + fieldSpeeds.omegaRadiansPerSecond / 50);
-    // System.out.println(newOmega.getDegrees());
-
-    // Transform2d newTransform = new Transform2d(newX, newY, newOmega);
-
-    // robotPose = robotPose.plus(newTransform);
   }
 
   public void updateRobotPose() {
