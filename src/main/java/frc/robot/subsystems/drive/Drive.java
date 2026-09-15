@@ -41,10 +41,10 @@ public class Drive extends SubsystemBase {
     final Translation2d backRightLocation = new Translation2d(-robotWidth / 2, -robotLength / 2);
 
     // change can id
-    frontLeftModule = new ModuleIOSparkMax(90, 91, 0, 0.0);
-    frontRightModule = new ModuleIOSparkMax(92, 93, 1, 0.0);
-    backLeftModule = new ModuleIOSparkMax(94, 95, 2, 0.0);
-    backRightModule = new ModuleIOSparkMax(96, 97, 3, 0.0);
+    frontLeftModule = new ModuleIOSparkMax(10, 11, 0, 0.0);
+    frontRightModule = new ModuleIOSparkMax(12, 13, 1, 0.0);
+    backLeftModule = new ModuleIOSparkMax(14, 15, 2, 0.0);
+    backRightModule = new ModuleIOSparkMax(16, 17, 3, 0.0);
 
     kinematics =
         new SwerveDriveKinematics(

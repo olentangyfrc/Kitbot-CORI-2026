@@ -1,5 +1,7 @@
 package frc.robot.subsystems.drive;
 
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.hardware.TalonFX;
 import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -13,7 +15,7 @@ import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ModuleIOSparkMax extends SubsystemBase {
-  private SparkMax driveMotor;
+  private TalonFX driveMotor;
   private SparkMax steerMotor;
   private AnalogEncoder encoder;
   private double offset;
@@ -27,19 +29,19 @@ public class ModuleIOSparkMax extends SubsystemBase {
 
   public ModuleIOSparkMax(
       int driveMotorCanId, int steerMotorCanId, int encoderId, double motorOffset) {
-    driveMotor = new SparkMax(driveMotorCanId, MotorType.kBrushless);
+    driveMotor = new TalonFX(driveMotorCanId, "can0");
     steerMotor = new SparkMax(steerMotorCanId, MotorType.kBrushless);
     encoder = new AnalogEncoder(encoderId, 360, 0);
     offset = motorOffset;
 
-    SparkMaxConfig driveConfig = new SparkMaxConfig();
+    TalonFXConfiguration driveConfig = new TalonFXConfiguration();
     SparkMaxConfig steerConfig = new SparkMaxConfig();
 
     // do sparkmax configs
 
     // change resetmode and persistmode later
-    driveMotor.configure(
-        driveConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+    driveMotor.getConfigurator().apply(driveConfig);
+
     steerMotor.configure(
         steerConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
 
@@ -70,7 +72,7 @@ public class ModuleIOSparkMax extends SubsystemBase {
 
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(
-        (driveMotor.getEncoder().getPosition() * wheelRadius * Math.PI * 2 * gearRatio)
+        (driveMotor.getPosition().getValueAsDouble() * wheelRadius * Math.PI * 2 * gearRatio)
             / encoderResolution,
         Rotation2d.fromRadians(getEncoderRadians()));
   }
