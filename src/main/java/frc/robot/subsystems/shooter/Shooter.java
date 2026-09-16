@@ -5,6 +5,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
+// Shooter and intake are controlled by the same motor
 public class Shooter extends SubsystemBase {
 
   private TalonFXConfiguration shooterConfig;
@@ -39,7 +40,29 @@ public class Shooter extends SubsystemBase {
     shooterMotor.setControl(new com.ctre.phoenix6.controls.VoltageOut(0.0));
   }
 
-  public void warmUp() {
-    // fill this in later
+  public boolean warmUp(double speed) { // input rps
+
+    shooterMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(speed));
+
+    double currentSpeed = shooterMotor.getVelocity().getValueAsDouble(); // returns RPS
+
+    double tolerance = 50; // change this later
+
+    if (currentSpeed > speed - tolerance || currentSpeed < speed + tolerance) {
+      return true;
+    } else {
+      return false;
+    }
+
+    /*
+    * currentspeed = shootermotor.getdumbspeed
+    * double tolerance = 50 rps
+    * if currentspeed > targetspeed - tolerance || currentspeed < tolerance + targetspeed
+    *  return true
+    * else
+    *  return false
+
+    */
+
   }
 }

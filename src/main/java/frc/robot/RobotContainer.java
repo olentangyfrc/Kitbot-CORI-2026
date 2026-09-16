@@ -16,6 +16,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.ShooterCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -23,6 +24,7 @@ import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
+import frc.robot.subsystems.indexer.Indexer;
 import frc.robot.subsystems.shooter.Shooter;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -36,6 +38,7 @@ public class RobotContainer {
   // Subsystems
   private final Drive drive;
   private final Shooter shooter;
+  private final Indexer indexer;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -59,6 +62,7 @@ public class RobotContainer {
                 new ModuleIOTalonFX(TunerConstants.BackRight));
 
         shooter = new Shooter();
+        indexer = new Indexer();
 
         // The ModuleIOTalonFXS implementation provides an example implementation for
         // TalonFXS controller connected to a CANdi with a PWM encoder. The
@@ -90,6 +94,7 @@ public class RobotContainer {
                 new ModuleIOSim(TunerConstants.BackRight));
 
         shooter = new Shooter();
+        indexer = new Indexer();
 
         break;
 
@@ -104,11 +109,13 @@ public class RobotContainer {
                 new ModuleIO() {});
 
         shooter = new Shooter();
+        indexer = new Indexer();
 
         break;
     }
 
     shooter.init();
+    indexer.init();
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
@@ -135,6 +142,7 @@ public class RobotContainer {
     // controller.a().whileTrue(SerializerCommands.startSerializer(serializer));
     // controller.x().whileTrue(SerializerCommands.stopSerializer(serializer));
     // controller.y().whileTrue(SerializerCommands.reverseSerializer(serializer));
+    controller.a().whileTrue(ShooterCommands.warmUp(shooter, indexer));
 
     // controller.a().onTrue(IntakeCommands.startIntake(intake));
     // controller.b().whileTrue(IntakeCommands.stopIntake(intake));
