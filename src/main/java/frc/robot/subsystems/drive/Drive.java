@@ -28,6 +28,11 @@ public class Drive extends SubsystemBase {
   private ModuleIOSparkMax backLeftModule;
   private ModuleIOSparkMax backRightModule;
 
+  private final Translation2d frontLeftLocation;
+  private final Translation2d frontRightLocation;
+  private final Translation2d backLeftLocation;
+  private final Translation2d backRightLocation;
+
   // odometry stuff
   private Pose2d robotPose;
   private Pose2d recentPose;
@@ -35,10 +40,10 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator;
 
   public Drive() {
-    final Translation2d frontLeftLocation = new Translation2d(robotWidth / 2, robotLength / 2);
-    final Translation2d frontRightLocation = new Translation2d(robotWidth / 2, -robotLength / 2);
-    final Translation2d backLeftLocation = new Translation2d(-robotWidth / 2, robotLength / 2);
-    final Translation2d backRightLocation = new Translation2d(-robotWidth / 2, -robotLength / 2);
+    frontLeftLocation = new Translation2d(robotWidth / 2, robotLength / 2);
+    frontRightLocation = new Translation2d(robotWidth / 2, -robotLength / 2);
+    backLeftLocation = new Translation2d(-robotWidth / 2, robotLength / 2);
+    backRightLocation = new Translation2d(-robotWidth / 2, -robotLength / 2);
 
     // change can id
     frontLeftModule = new ModuleIOSparkMax(10, 11, 0, 0.0);
@@ -47,9 +52,8 @@ public class Drive extends SubsystemBase {
     backRightModule = new ModuleIOSparkMax(16, 17, 3, 0.0);
 
     kinematics =
-        new SwerveDriveKinematics(
-            frontLeftLocation, frontRightLocation, backLeftLocation, backRightLocation);
-
+        new SwerveDriveKinematics(getModuleTranslations());
+            
     // change for type of gyro and id
     gyro = new Pigeon2(0);
     gyro.setYaw(0);
@@ -111,6 +115,28 @@ public class Drive extends SubsystemBase {
     //  poseEstimator.addVisionMeasurement(recentPose, vision.timestamp)
     // updateRobotPose()
 
+  }
+
+  public void stop() {
+    drive(new ChassisSpeeds());
+  }
+
+  public void stopWithX() {
+    Rotation2d[] headings = new Rotation2d[4];
+    for (int i = 0; i < 4; i++) {
+      headings[i] = getModuleTranslations()[i].getAngle();
+    }
+    kinematics.resetHeadings(headings);
+    stop();
+  }
+
+  public Translation2d[] getModuleTranslations() {
+    return new Translation2d[] {
+      frontLeftLocation,
+      frontRightLocation,
+      backLeftLocation,
+      backRightLocation
+    };
   }
 
   public void periodic() {
