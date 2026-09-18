@@ -12,8 +12,11 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.DriveCommands;
+import frc.robot.commands.ShooterCommands;
 import frc.robot.subsystems.drive.Drive;
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import frc.robot.subsystems.shooter.Shooter;
+
+// import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -23,13 +26,14 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  */
 public class RobotContainer {
   // Subsystems
-  private Drive drive;
+  private final Drive drive;
+  private final Shooter shooter;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
 
   // Dashboard inputs
-  private final LoggedDashboardChooser<Command> autoChooser;
+  // private final LoggedDashboardChooser<Command> autoChooser;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -57,6 +61,7 @@ public class RobotContainer {
         // new ModuleIOTalonFXS(TunerConstants.FrontRight),
         // new ModuleIOTalonFXS(TunerConstants.BackLeft),
         // new ModuleIOTalonFXS(TunerConstants.BackRight));
+        shooter = new Shooter();
         break;
 
       case SIM:
@@ -68,6 +73,7 @@ public class RobotContainer {
         //         new ModuleIOSim(TunerConstants.FrontRight),
         //         new ModuleIOSim(TunerConstants.BackLeft),
         //         new ModuleIOSim(TunerConstants.BackRight));
+        shooter = new Shooter();
 
         break;
 
@@ -79,13 +85,15 @@ public class RobotContainer {
         //     new ModuleIO() {},
         //     new ModuleIO() {},
         //     new ModuleIO() {});
+        shooter = new Shooter();
 
         break;
     }
 
+    shooter.init();
     // Set up auto routines
     // autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
-    autoChooser = null;
+    // autoChooser = null;
     // Configure the button bindings
     configureButtonBindings();
   }
@@ -104,16 +112,28 @@ public class RobotContainer {
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
+
+    if (controller.rightTrigger().getAsBoolean()) {
+      // Commands.runOnce(ShooterCommands.)
+      // point to hub (optional)
+      // spin up shooter
+      // wait for shooter to get up to speed
+      // run indexers
+    }
+    ;
+
+    if (controller.leftTrigger().getAsBoolean()) {
+      ShooterCommands.setIntakeVelocity(shooter, 500);
+      ShooterCommands.setIndexerVelocity(shooter, 500);
+    }
+
+    if (controller.b().getAsBoolean()) {
+      ShooterCommands.setIntakeVelocity(shooter, -500);
+      ShooterCommands.setIndexerVelocity(shooter, -500);
+    }
+    ;
   }
-
-  // controller.a().whileTrue(SerializerCommands.startSerializer(serializer));
-  // controller.x().whileTrue(SerializerCommands.stopSerializer(serializer));
-  // controller.y().whileTrue(SerializerCommands.reverseSerializer(serializer));
-
-  // controller.a().onTrue(IntakeCommands.startIntake(intake));
-  // controller.b().whileTrue(IntakeCommands.stopIntake(intake));
-  // controller.x().whileTrue(IntakeCommands.ejectIntake(intake));
-  // controller.y().whileTrue(IntakeCommands.setIntakePosition(intake, 90));
+  ;
 
   // Lock to 0° when A button is held
 
