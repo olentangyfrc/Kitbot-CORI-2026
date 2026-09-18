@@ -35,7 +35,7 @@ public class Drive extends SubsystemBase {
 
   // odometry stuff
   private Pose2d robotPose;
-  private Pose2d recentPose;
+  // private Pose2d recentPose;
   private Field2d field;
   private SwerveDrivePoseEstimator poseEstimator;
 
@@ -51,9 +51,8 @@ public class Drive extends SubsystemBase {
     backLeftModule = new ModuleIOSparkMax(14, 15, 2, 0.0);
     backRightModule = new ModuleIOSparkMax(16, 17, 3, 0.0);
 
-    kinematics =
-        new SwerveDriveKinematics(getModuleTranslations());
-            
+    kinematics = new SwerveDriveKinematics(getModuleTranslations());
+
     // change for type of gyro and id
     gyro = new Pigeon2(0);
     gyro.setYaw(0);
@@ -73,9 +72,9 @@ public class Drive extends SubsystemBase {
   public void drive(ChassisSpeeds chassisSpeeds) {
     ChassisSpeeds fieldSpeeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds, getGyroRotation2d());
-    fieldSpeeds = ChassisSpeeds.discretize(fieldSpeeds, 0.02);
+    ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(fieldSpeeds, 0.02);
 
-    SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(fieldSpeeds);
+    SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(discreteSpeeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, 1);
 
     frontLeftModule.setState(moduleStates[0]);
@@ -87,7 +86,7 @@ public class Drive extends SubsystemBase {
   public void driveSim(ChassisSpeeds chassisSpeeds) {
     ChassisSpeeds fieldSpeeds =
         ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds, robotPose.getRotation());
-
+    
     double modX = fieldSpeeds.vxMetersPerSecond / 50;
     double modY = fieldSpeeds.vyMetersPerSecond / 50;
     Rotation2d modOmega = Rotation2d.fromRadians(fieldSpeeds.omegaRadiansPerSecond / 50);
@@ -114,7 +113,10 @@ public class Drive extends SubsystemBase {
     // if recentPose is not none
     //  poseEstimator.addVisionMeasurement(recentPose, vision.timestamp)
     // updateRobotPose()
-
+    frontLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+    frontRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
+    backLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
+    backRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
   }
 
   public void stop() {
@@ -122,20 +124,13 @@ public class Drive extends SubsystemBase {
   }
 
   public void stopWithX() {
-    Rotation2d[] headings = new Rotation2d[4];
-    for (int i = 0; i < 4; i++) {
-      headings[i] = getModuleTranslations()[i].getAngle();
-    }
-    kinematics.resetHeadings(headings);
+
     stop();
   }
 
   public Translation2d[] getModuleTranslations() {
     return new Translation2d[] {
-      frontLeftLocation,
-      frontRightLocation,
-      backLeftLocation,
-      backRightLocation
+      frontLeftLocation, frontRightLocation, backLeftLocation, backRightLocation
     };
   }
 

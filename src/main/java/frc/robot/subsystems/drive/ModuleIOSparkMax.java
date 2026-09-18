@@ -2,8 +2,8 @@ package frc.robot.subsystems.drive;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.revrobotics.spark.SparkBase.PersistMode;
-import com.revrobotics.spark.SparkBase.ResetMode;
+import com.revrobotics.PersistMode;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -22,10 +22,10 @@ public class ModuleIOSparkMax extends SubsystemBase {
 
   private PIDController steerPIDController;
 
-  // odometry stuff, need change
-  private double wheelRadius;
-  private double gearRatio;
-  private double encoderResolution;
+  // odometry stuff, need change later
+  private double wheelRadius = 4;
+  private double gearRatio = 3/1;
+  private double encoderResolution = 400;
 
   public ModuleIOSparkMax(
       int driveMotorCanId, int steerMotorCanId, int encoderId, double motorOffset) {
@@ -43,7 +43,7 @@ public class ModuleIOSparkMax extends SubsystemBase {
     driveMotor.getConfigurator().apply(driveConfig);
 
     steerMotor.configure(
-        steerConfig, ResetMode.kNoResetSafeParameters, PersistMode.kNoPersistParameters);
+        steerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
     steerPIDController = new PIDController(0, 0, 0);
     steerPIDController.enableContinuousInput(-180, 180);
@@ -56,15 +56,12 @@ public class ModuleIOSparkMax extends SubsystemBase {
   public void setState(SwerveModuleState state) {
     Rotation2d encoderRotation2d = new Rotation2d(getEncoderRadians());
 
-    var optimized = SwerveModuleState.optimize(state, encoderRotation2d);
-
-    optimized.speedMetersPerSecond =
-        optimized.speedMetersPerSecond
-            * Math.cos(optimized.angle.getRadians() - encoderRotation2d.getRadians());
+    state.optimize(encoderRotation2d);
+    state.cosineScale(encoderRotation2d);
 
     double steerOutput =
-        steerPIDController.calculate(getEncoderRadians(), optimized.angle.getRadians());
-    double driveOutput = optimized.speedMetersPerSecond;
+        steerPIDController.calculate(getEncoderRadians(), state.angle.getRadians());
+    double driveOutput = state.speedMetersPerSecond;
 
     driveMotor.setVoltage(driveOutput);
     driveMotor.setVoltage(steerOutput);
