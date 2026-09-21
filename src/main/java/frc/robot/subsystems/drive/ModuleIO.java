@@ -2,10 +2,12 @@ package frc.robot.subsystems.drive;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -19,6 +21,8 @@ public class ModuleIO extends SubsystemBase {
   private SparkMax steerMotor;
   private AnalogEncoder encoder;
   private double offset;
+  private TalonFXConfiguration driveConfig;
+  private SparkMaxConfig steerConfig;
 
   private PIDController steerPIDController;
   private double steerP = 0;
@@ -30,29 +34,30 @@ public class ModuleIO extends SubsystemBase {
   private double gearRatio = 3 / 1;
   private double encoderResolution = 400;
 
+  private double driveVelocity;
+  private Rotation2d steerAngle;
+
   public ModuleIO(int driveMotorCanId, int steerMotorCanId, int encoderId, double motorOffset) {
     driveMotor = new TalonFX(driveMotorCanId, "can0");
     steerMotor = new SparkMax(steerMotorCanId, MotorType.kBrushless);
-    encoder = new AnalogEncoder(encoderId, 360, 0);
+    encoder = new AnalogEncoder(encoderId, 2 * Math.PI, 0);
     offset = motorOffset;
 
-    TalonFXConfiguration driveConfig = new TalonFXConfiguration();
-    SparkMaxConfig steerConfig = new SparkMaxConfig();
+    driveConfig = new TalonFXConfiguration();
+    driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    driveMotor.getConfigurator().apply(driveConfig, 0.25);
 
-    // do sparkmax configs
-
-    // change resetmode and persistmode later
-    driveMotor.getConfigurator().apply(driveConfig);
-
+    steerConfig = new SparkMaxConfig();
+    steerConfig.idleMode(IdleMode.kBrake);
     steerMotor.configure(
         steerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
     steerPIDController = new PIDController(steerP, steerI, steerD);
-    steerPIDController.enableContinuousInput(-180, 180);
+    steerPIDController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
   public double getEncoderRadians() {
-    return Math.toRadians(encoder.get()) + offset;
+    return encoder.get() + offset;
   }
 
   public void setState(SwerveModuleState state) {
@@ -60,6 +65,9 @@ public class ModuleIO extends SubsystemBase {
 
     state.optimize(encoderRotation2d);
     state.cosineScale(encoderRotation2d);
+
+    driveVelocity = state.speedMetersPerSecond;
+    steerAngle = state.angle;
 
     double steerOutput =
         steerPIDController.calculate(getEncoderRadians(), state.angle.getRadians());
@@ -74,5 +82,9 @@ public class ModuleIO extends SubsystemBase {
         (driveMotor.getPosition().getValueAsDouble() * wheelRadius * Math.PI * 2 * gearRatio)
             / encoderResolution,
         Rotation2d.fromRadians(getEncoderRadians()));
+  }
+
+  public SwerveModuleState getState() {
+    return new SwerveModuleState(driveVelocity, steerAngle);
   }
 }

@@ -84,60 +84,40 @@ public class RobotContainer {
             () -> -controller.getRawAxis(2)
             // () -> -controller.getRightX()
             ));
+
+    shooter.setDefaultCommand(ShooterCommands.stop(shooter));
     // Snake command, front is always forwards
     controller
         .a()
         .whileTrue(
             DriveCommands.joystickDriveSnake(
-                drive,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
-                () -> -controller.getRightX()));
+                drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
+    // unused point to hub code, shoot on move is better
+    // controller
+    //     .x()
+    //     .whileTrue(
+    //         DriveCommands.pointToHub(
+    //             drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
+    controller
+        .rightTrigger(0.35)
+        .whileTrue(
+            DriveCommands.shootOnTheMove(
+                drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
 
-    if (controller.rightTrigger().getAsBoolean()) {
-      // Commands.runOnce(ShooterCommands.)
-      // point to hub (optional)
-      // spin up shooter
-      // wait for shooter to get up to speed
-      // run indexers
-    }
-    ;
+    // point to hub
+    // spin up shooter
+    // wait for shooter to get up to speed
+    // run indexers
+    controller.rightTrigger(0.35).whileTrue(ShooterCommands.spinUp(shooter));
+    controller.rightTrigger(0.35).whileFalse(ShooterCommands.stop(shooter));
 
-    controller.leftTrigger().whileTrue(ShooterCommands.setIntakeVelocity(shooter, 500));
-    controller.leftTrigger().whileTrue(ShooterCommands.setIndexerVelocity(shooter, 500));
+    controller.leftTrigger().whileTrue(ShooterCommands.intake(shooter));
 
-    controller.b().whileTrue(ShooterCommands.setIntakeVelocity(shooter, -500));
-    controller.b().whileTrue(ShooterCommands.setIndexerVelocity(shooter, -500));
+    controller.b().whileTrue(ShooterCommands.eject(shooter));
 
     controller.start().whileTrue(DriveCommands.resetGyro(drive));
   }
   ;
-
-  // Lock to 0° when A button is held
-
-  // controller
-  //     .a()
-  //     .whileTrue(
-  //         DriveCommands.joystickDriveAtAngle(
-  //             drive,
-  //             () -> controller.getLeftY(),
-  //             () -> controller.getLeftX(),
-  //             () -> Rotation2d.fromDegrees(180)));
-
-  // // Switch to X pattern when X button is pressed
-  // controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
-
-  // Reset gyro to 0° when B button is pressed
-  //   controller
-  //       .b()
-  //       .onTrue(
-  //           Commands.runOnce(
-  //                   () ->
-  //                       drive.setPose(
-  //                           new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
-  //                   drive)
-  //               .ignoringDisable(true));
-  // }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.

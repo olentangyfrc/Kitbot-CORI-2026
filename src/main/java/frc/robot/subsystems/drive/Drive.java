@@ -1,7 +1,6 @@
 package frc.robot.subsystems.drive;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -25,6 +24,14 @@ public class Drive extends SubsystemBase {
 
   private SwerveDriveKinematics kinematics;
 
+  private SwerveModulePosition[] modulePositions =
+      new SwerveModulePosition[] {
+        new SwerveModulePosition(),
+        new SwerveModulePosition(),
+        new SwerveModulePosition(),
+        new SwerveModulePosition()
+      };
+
   private ModuleIO frontLeftModule;
   private ModuleIO frontRightModule;
   private ModuleIO backLeftModule;
@@ -36,13 +43,11 @@ public class Drive extends SubsystemBase {
   private final Translation2d backRightLocation;
 
   // odometry stuff
-  private Pose2d robotPose;
+  private Pose2d robotPose = new Pose2d();
+  private ChassisSpeeds simSpeeds = new ChassisSpeeds();
   // private Pose2d recentPose;
-  private Field2d field;
+  private Field2d field = new Field2d();
   private SwerveDrivePoseEstimator poseEstimator;
-
-  private PIDController snakePIDController;
-  private double snakeAngleVector = 0;
 
   public Drive() {
     frontLeftLocation = new Translation2d(robotWidth / 2, robotLength / 2);
@@ -58,23 +63,23 @@ public class Drive extends SubsystemBase {
 
     kinematics = new SwerveDriveKinematics(getModuleTranslations());
 
-    snakePIDController = new PIDController(6, 0, 0);
-    snakePIDController.enableContinuousInput(-Math.PI, Math.PI);
-
-    // change for type of gyro and id
+    // change can id
     gyro = new Pigeon2(0);
     gyro.setYaw(0);
 
-    field = new Field2d();
-    robotPose = new Pose2d();
+    poseEstimator =
+        new SwerveDrivePoseEstimator(kinematics, getRotation(), modulePositions, robotPose);
   }
 
-  public double getGyroRadians() {
-    return Math.toRadians(gyro.getYaw().getValueAsDouble());
-  }
-
-  public Rotation2d getGyroRotation2d() {
-    return Rotation2d.fromRadians(getGyroRadians());
+  public Rotation2d getRotation() {
+    switch (Constants.currentMode) {
+      case REAL:
+        return Rotation2d.fromDegrees(gyro.getYaw().getValueAsDouble());
+      case SIM:
+        return robotPose.getRotation();
+      default:
+        return new Rotation2d();
+    }
   }
 
   public void resetGyro() {
@@ -82,26 +87,14 @@ public class Drive extends SubsystemBase {
     robotPose = new Pose2d(robotPose.getX(), robotPose.getY(), Rotation2d.kZero);
   }
 
-  public void resetSnakeAngleVector() {
-    switch (Constants.currentMode) {
-      case REAL:
-        snakeAngleVector = getGyroRadians();
-        break;
-      case SIM:
-        snakeAngleVector = robotPose.getRotation().getRadians();
-        break;
-      default:
-        break;
-    }
-  }
-
   public void drive(ChassisSpeeds fieldSpeeds) {
-    System.out.println(fieldSpeeds.omegaRadiansPerSecond);
+    ChassisSpeeds chassisSpeeds =
+        ChassisSpeeds.discretize(
+            ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, getRotation()), 0.02);
+    simSpeeds = chassisSpeeds;
+
     switch (Constants.currentMode) {
       case REAL:
-        ChassisSpeeds chassisSpeeds =
-            ChassisSpeeds.discretize(
-                ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, getGyroRotation2d()), 0.02);
         SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds);
         SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, 1);
 
@@ -112,63 +105,10 @@ public class Drive extends SubsystemBase {
         break;
 
       case SIM:
-        ChassisSpeeds simSpeeds =
-            ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, robotPose.getRotation());
         // divide by 50 is to account for 20ms loop. 50 loops in a second.
-        double modX = simSpeeds.vxMetersPerSecond / 50;
-        double modY = simSpeeds.vyMetersPerSecond / 50;
-        Rotation2d modOmega = Rotation2d.fromRadians(simSpeeds.omegaRadiansPerSecond / 50);
-
-        Transform2d modTransform = new Transform2d(modX, modY, modOmega);
-
-        robotPose = robotPose.plus(modTransform);
-        break;
-
-      default:
-        break;
-    }
-  }
-
-  public void driveSnake(ChassisSpeeds fieldSpeeds) {
-    double vecX = fieldSpeeds.vxMetersPerSecond;
-    double vecY = fieldSpeeds.vyMetersPerSecond;
-
-    if (Math.hypot(vecX, vecY) > 0) {
-      snakeAngleVector = Math.atan2(vecY, vecX);
-    }
-
-    switch (Constants.currentMode) {
-      case REAL:
-        ChassisSpeeds chassisSpeeds =
-            ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, getGyroRotation2d());
-
-        double x = chassisSpeeds.vxMetersPerSecond;
-        double y = chassisSpeeds.vyMetersPerSecond;
-        double omega = snakePIDController.calculate(getGyroRadians(), snakeAngleVector);
-
-        ChassisSpeeds snakeSpeeds = ChassisSpeeds.discretize(new ChassisSpeeds(x, y, omega), 0.02);
-
-        SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(snakeSpeeds);
-        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, 1);
-
-        frontLeftModule.setState(moduleStates[0]);
-        frontRightModule.setState(moduleStates[1]);
-        backLeftModule.setState(moduleStates[2]);
-        backRightModule.setState(moduleStates[3]);
-        break;
-
-      case SIM:
-        ChassisSpeeds simSpeeds =
-            ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, robotPose.getRotation());
-
-        Rotation2d modOmega =
-            Rotation2d.fromRadians(
-                snakePIDController.calculate(robotPose.getRotation().getRadians(), snakeAngleVector)
-                    / 50);
-
-        // divide by 50 is to account for 20ms loop. 50 loops in a second.
-        double modX = simSpeeds.vxMetersPerSecond / 50;
-        double modY = simSpeeds.vyMetersPerSecond / 50;
+        double modX = chassisSpeeds.vxMetersPerSecond / 50;
+        double modY = chassisSpeeds.vyMetersPerSecond / 50;
+        Rotation2d modOmega = Rotation2d.fromRadians(chassisSpeeds.omegaRadiansPerSecond / 50);
 
         Transform2d modTransform = new Transform2d(modX, modY, modOmega);
 
@@ -181,14 +121,12 @@ public class Drive extends SubsystemBase {
   }
 
   public void updateRobotPose() {
-    SwerveModulePosition[] positions = new SwerveModulePosition[4];
+    modulePositions[0] = frontLeftModule.getPosition();
+    modulePositions[1] = frontRightModule.getPosition();
+    modulePositions[2] = backLeftModule.getPosition();
+    modulePositions[3] = backRightModule.getPosition();
 
-    positions[0] = frontLeftModule.getPosition();
-    positions[1] = frontRightModule.getPosition();
-    positions[2] = backLeftModule.getPosition();
-    positions[3] = backRightModule.getPosition();
-
-    robotPose = poseEstimator.update(getGyroRotation2d(), positions);
+    robotPose = poseEstimator.update(getRotation(), modulePositions);
   }
 
   public void updatePoseEstimator() {
@@ -218,8 +156,87 @@ public class Drive extends SubsystemBase {
     };
   }
 
+  public ChassisSpeeds getChassisSpeeds() {
+    switch (Constants.currentMode) {
+      case REAL:
+        return kinematics.toChassisSpeeds(getModuleStates());
+      case SIM:
+        return simSpeeds;
+      default:
+        return new ChassisSpeeds();
+    }
+  }
+
+  public SwerveModuleState[] getModuleStates() {
+    return new SwerveModuleState[] {
+      frontLeftModule.getState(),
+      frontRightModule.getState(),
+      backLeftModule.getState(),
+      backRightModule.getState()
+    };
+  }
+
+  public Translation2d getHubPosition() {
+    return new Translation2d(4.6, 4);
+  }
+
+  // call empty, uses default params, with input gets specified distance or angle
+  public double getDistanceFromHub() {
+    return getDistanceFromHub(getHubPosition());
+  }
+
+  public double getDistanceFromHub(Translation2d position) {
+    return robotPose.getTranslation().getDistance(position);
+  }
+
+  public double getDistanceFromVirtualHub() {
+    return getDistanceFromHub(getVirtualHubPosition());
+  }
+
+  public Rotation2d getRotationToHub() {
+    return getRotationToHub(getHubPosition());
+  }
+
+  public Rotation2d getRotationToHub(Translation2d position) {
+    Translation2d currentTranslation = robotPose.getTranslation();
+    return position.minus(currentTranslation).getAngle();
+  }
+
+  public Rotation2d getRotationToVirtualHub() {
+    return getRotationToHub(getVirtualHubPosition());
+  }
+
+  // shoot on the move stuff
+  public Translation2d getVirtualHubPosition() {
+    Translation2d robotTranslation = robotPose.getTranslation();
+    ChassisSpeeds fieldSpeeds =
+        ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getRotation());
+    Translation2d hubPosition = getHubPosition();
+
+    double defaultFuelSpeed =
+        10; // change later, estimate of speed of fuel coming out of shooter in m/s
+    Translation2d virtualTarget = hubPosition;
+
+    // runs 3 iterations. need distance to calculate time of flight, need time of flight to
+    // calculate distance
+    // start with distance from actual hub, adjust from there.
+    for (int i = 0; i < 3; i++) {
+      double distance = robotTranslation.getDistance(virtualTarget);
+      double timeOfFlight = distance / defaultFuelSpeed;
+      virtualTarget =
+          new Translation2d(
+              hubPosition.getX() - fieldSpeeds.vxMetersPerSecond * timeOfFlight,
+              hubPosition.getY() - fieldSpeeds.vyMetersPerSecond * timeOfFlight);
+    }
+    return virtualTarget;
+  }
+
   public void periodic() {
     field.setRobotPose(robotPose);
     SmartDashboard.putData(field);
+    SmartDashboard.putNumber("virtual hub x", getVirtualHubPosition().getX());
+    SmartDashboard.putNumber("virtual hub y", getVirtualHubPosition().getY());
+
+    // updateRobotPose();
   }
 }

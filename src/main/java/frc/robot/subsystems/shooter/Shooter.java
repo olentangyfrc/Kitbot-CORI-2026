@@ -3,6 +3,7 @@ package frc.robot.subsystems.shooter;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 // shooter and intake are controlled by the same motor. indexer in same subsystem.
@@ -23,7 +24,7 @@ public class Shooter extends SubsystemBase {
   public void init() {
 
     shooterConfig = new TalonFXConfiguration();
-    shooterConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    shooterConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     shooterConfig.Slot0 = new com.ctre.phoenix6.configs.Slot0Configs();
     shooterConfig.Slot0.kP = 0;
     shooterConfig.Slot0.kI = 0;
@@ -34,7 +35,7 @@ public class Shooter extends SubsystemBase {
     shooterMotor.getConfigurator().apply(shooterConfig, 0.25);
 
     indexerConfig = new TalonFXConfiguration();
-    indexerConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    indexerConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
 
     indexerConfig.Slot0 = new com.ctre.phoenix6.configs.Slot0Configs();
     indexerConfig.Slot0.kP = 0;
@@ -86,5 +87,13 @@ public class Shooter extends SubsystemBase {
 
   public boolean isShooterAtSpeed() {
     return shooterMotor.getClosedLoopError().getValueAsDouble() < shooterVelocityTolerance;
+  }
+
+  public double getShooterSpeed() {
+    return shooterMotor.getVelocity().getValueAsDouble();
+  }
+
+  public void periodic() {
+    SmartDashboard.putNumber("shooter rps", getShooterSpeed());
   }
 }

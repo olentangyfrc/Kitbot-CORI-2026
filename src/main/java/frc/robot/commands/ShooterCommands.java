@@ -5,6 +5,11 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.shooter.Shooter;
 
 public class ShooterCommands {
+  static double shooterShootingSpeed = 200; // change later
+  static double shooterIntakingSpeed = 100; // change later
+
+  static double indexerShootingSpeed = -60; // change later
+  static double indexerIntakingSpeed = 60; // change later
 
   Shooter shooter;
 
@@ -42,8 +47,34 @@ public class ShooterCommands {
 
   public static Command spinUp(Shooter shooter) {
     return Commands.run(
+            () -> {
+              shooter.setShooterSpeed(shooterShootingSpeed);
+            },
+            shooter)
+        .until(() -> shooter.isShooterAtSpeed())
+        .andThen(
+            Commands.run(
+                () -> {
+                  shooter.setShooterSpeed(shooterShootingSpeed);
+                  shooter.setIndexerSpeed(indexerShootingSpeed);
+                },
+                shooter));
+  }
+
+  public static Command intake(Shooter shooter) {
+    return Commands.run(
         () -> {
-          shooter.spinUp();
+          shooter.setIntakeSpeed(shooterIntakingSpeed);
+          shooter.setIndexerSpeed(indexerIntakingSpeed);
+        },
+        shooter);
+  }
+
+  public static Command eject(Shooter shooter) {
+    return Commands.run(
+        () -> {
+          shooter.setIntakeSpeed(-shooterIntakingSpeed);
+          shooter.setIndexerSpeed(-indexerIntakingSpeed);
         },
         shooter);
   }
