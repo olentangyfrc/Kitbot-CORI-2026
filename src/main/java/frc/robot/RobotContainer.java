@@ -35,44 +35,18 @@ public class RobotContainer {
   // Dashboard inputs
   // private final LoggedDashboardChooser<Command> autoChooser;
 
-  /** The container for the robot. Contains subsystems, OI devices, and commands. */
+  /** The container for the robot. Contains subsystems, IO devices, and commands. */
   public RobotContainer() {
     switch (Constants.currentMode) {
       case REAL:
         // Real robot, instantiate hardware IO implementations
-        // ModuleIOTalonFX is intended for modules with TalonFX drive, TalonFX turn, and
-        // a CANcoder
         drive = new Drive();
-
-        // The ModuleIOTalonFXS implementation provides an example implementation for
-        // TalonFXS controller connected to a CANdi with a PWM encoder. The
-        // implementations
-        // of ModuleIOTalonFX, ModuleIOTalonFXS, and ModuleIOSpark (from the Spark
-        // swerve
-        // template) can be freely intermixed to support alternative hardware
-        // arrangements.
-        // Please see the AdvantageKit template documentation for more information:
-        // https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template#custom-module-implementations
-        //
-        // drive =
-        // new Drive(
-        // new GyroIOPigeon2(),
-        // new ModuleIOTalonFXS(TunerConstants.FrontLeft),
-        // new ModuleIOTalonFXS(TunerConstants.FrontRight),
-        // new ModuleIOTalonFXS(TunerConstants.BackLeft),
-        // new ModuleIOTalonFXS(TunerConstants.BackRight));
         shooter = new Shooter();
         break;
 
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
         drive = new Drive();
-        //     new Drive(
-        //         new GyroIO() {},
-        //         new ModuleIOSim(TunerConstants.FrontLeft),
-        //         new ModuleIOSim(TunerConstants.FrontRight),
-        //         new ModuleIOSim(TunerConstants.BackLeft),
-        //         new ModuleIOSim(TunerConstants.BackRight));
         shooter = new Shooter();
 
         break;
@@ -80,11 +54,6 @@ public class RobotContainer {
       default:
         // Replayed robot, disable IO implementations
         drive = new Drive();
-        //     new GyroIO() {},
-        //     new ModuleIO() {},
-        //     new ModuleIO() {},
-        //     new ModuleIO() {},
-        //     new ModuleIO() {});
         shooter = new Shooter();
 
         break;
@@ -111,15 +80,19 @@ public class RobotContainer {
             drive,
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+            // temporary fix for some random bug
+            () -> -controller.getRawAxis(2)
+            // () -> -controller.getRightX()
+            ));
     // Snake command, front is always forwards
-    // if (controller.a().getAsBoolean()) {
-    //   DriveCommands.joystickDriveSnake(
-    //       drive,
-    //       () -> -controller.getLeftY(),
-    //       () -> -controller.getLeftX(),
-    //       () -> -controller.getRightX());
-    // }
+    controller
+        .a()
+        .whileTrue(
+            DriveCommands.joystickDriveSnake(
+                drive,
+                () -> -controller.getLeftY(),
+                () -> -controller.getLeftX(),
+                () -> -controller.getRightX()));
 
     if (controller.rightTrigger().getAsBoolean()) {
       // Commands.runOnce(ShooterCommands.)
@@ -130,16 +103,13 @@ public class RobotContainer {
     }
     ;
 
-    if (controller.leftTrigger().getAsBoolean()) {
-      ShooterCommands.setIntakeVelocity(shooter, 500);
-      ShooterCommands.setIndexerVelocity(shooter, 500);
-    }
+    controller.leftTrigger().whileTrue(ShooterCommands.setIntakeVelocity(shooter, 500));
+    controller.leftTrigger().whileTrue(ShooterCommands.setIndexerVelocity(shooter, 500));
 
-    if (controller.b().getAsBoolean()) {
-      ShooterCommands.setIntakeVelocity(shooter, -500);
-      ShooterCommands.setIndexerVelocity(shooter, -500);
-    }
-    ;
+    controller.b().whileTrue(ShooterCommands.setIntakeVelocity(shooter, -500));
+    controller.b().whileTrue(ShooterCommands.setIndexerVelocity(shooter, -500));
+
+    controller.start().whileTrue(DriveCommands.resetGyro(drive));
   }
   ;
 

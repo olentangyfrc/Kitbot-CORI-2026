@@ -25,10 +25,10 @@ public class Drive extends SubsystemBase {
 
   private SwerveDriveKinematics kinematics;
 
-  private ModuleIOSparkMax frontLeftModule;
-  private ModuleIOSparkMax frontRightModule;
-  private ModuleIOSparkMax backLeftModule;
-  private ModuleIOSparkMax backRightModule;
+  private ModuleIO frontLeftModule;
+  private ModuleIO frontRightModule;
+  private ModuleIO backLeftModule;
+  private ModuleIO backRightModule;
 
   private final Translation2d frontLeftLocation;
   private final Translation2d frontRightLocation;
@@ -51,14 +51,14 @@ public class Drive extends SubsystemBase {
     backRightLocation = new Translation2d(-robotWidth / 2, -robotLength / 2);
 
     // change can id
-    frontLeftModule = new ModuleIOSparkMax(10, 11, 0, 0.0);
-    frontRightModule = new ModuleIOSparkMax(12, 13, 1, 0.0);
-    backLeftModule = new ModuleIOSparkMax(14, 15, 2, 0.0);
-    backRightModule = new ModuleIOSparkMax(16, 17, 3, 0.0);
+    frontLeftModule = new ModuleIO(10, 11, 0, 0.0);
+    frontRightModule = new ModuleIO(12, 13, 1, 0.0);
+    backLeftModule = new ModuleIO(14, 15, 2, 0.0);
+    backRightModule = new ModuleIO(16, 17, 3, 0.0);
 
     kinematics = new SwerveDriveKinematics(getModuleTranslations());
 
-    snakePIDController = new PIDController(3, 0, 0);
+    snakePIDController = new PIDController(6, 0, 0);
     snakePIDController.enableContinuousInput(-Math.PI, Math.PI);
 
     // change for type of gyro and id
@@ -75,6 +75,24 @@ public class Drive extends SubsystemBase {
 
   public Rotation2d getGyroRotation2d() {
     return Rotation2d.fromRadians(getGyroRadians());
+  }
+
+  public void resetGyro() {
+    gyro.reset();
+    robotPose = new Pose2d(robotPose.getX(), robotPose.getY(), Rotation2d.kZero);
+  }
+
+  public void resetSnakeAngleVector() {
+    switch (Constants.currentMode) {
+      case REAL:
+        snakeAngleVector = getGyroRadians();
+        break;
+      case SIM:
+        snakeAngleVector = robotPose.getRotation().getRadians();
+        break;
+      default:
+        break;
+    }
   }
 
   public void drive(ChassisSpeeds fieldSpeeds) {

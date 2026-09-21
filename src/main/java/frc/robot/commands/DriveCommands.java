@@ -8,7 +8,7 @@ import frc.robot.subsystems.drive.Drive;
 import java.util.function.DoubleSupplier;
 
 public class DriveCommands {
-  public static final double DEADBAND = 0.25;
+  public static final double DEADBAND = 0.1;
 
   private DriveCommands() {}
 
@@ -33,17 +33,26 @@ public class DriveCommands {
   public static Command joystickDriveSnake(
       Drive drive, DoubleSupplier x, DoubleSupplier y, DoubleSupplier omega) {
     return Commands.run(
+            () -> {
+              double xspeed = MathUtil.applyDeadband(x.getAsDouble(), DEADBAND);
+              double yspeed = MathUtil.applyDeadband(y.getAsDouble(), DEADBAND);
+              double omegaspeed = MathUtil.applyDeadband(omega.getAsDouble(), DEADBAND);
+
+              xspeed = Math.copySign(xspeed * xspeed, xspeed) * 3;
+              yspeed = Math.copySign(yspeed * yspeed, yspeed) * 3;
+              omegaspeed = Math.copySign(omegaspeed * omegaspeed, omegaspeed) * 6;
+
+              ChassisSpeeds chassisSpeeds = new ChassisSpeeds(xspeed, yspeed, omegaspeed);
+              drive.driveSnake(chassisSpeeds);
+            },
+            drive)
+        .beforeStarting(() -> drive.resetSnakeAngleVector());
+  }
+
+  public static Command resetGyro(Drive drive) {
+    return Commands.run(
         () -> {
-          double xspeed = MathUtil.applyDeadband(x.getAsDouble(), DEADBAND);
-          double yspeed = MathUtil.applyDeadband(y.getAsDouble(), DEADBAND);
-          double omegaspeed = MathUtil.applyDeadband(omega.getAsDouble(), DEADBAND);
-
-          xspeed = Math.copySign(xspeed * xspeed, xspeed) * 3;
-          yspeed = Math.copySign(yspeed * yspeed, yspeed) * 3;
-          omegaspeed = Math.copySign(omegaspeed * omegaspeed, omegaspeed) * 6;
-
-          ChassisSpeeds chassisSpeeds = new ChassisSpeeds(xspeed, yspeed, omegaspeed);
-          drive.driveSnake(chassisSpeeds);
+          drive.resetGyro();
         },
         drive);
   }

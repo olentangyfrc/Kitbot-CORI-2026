@@ -14,7 +14,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class ModuleIOSparkMax extends SubsystemBase {
+public class ModuleIO extends SubsystemBase {
   private TalonFX driveMotor;
   private SparkMax steerMotor;
   private AnalogEncoder encoder;
@@ -30,8 +30,7 @@ public class ModuleIOSparkMax extends SubsystemBase {
   private double gearRatio = 3 / 1;
   private double encoderResolution = 400;
 
-  public ModuleIOSparkMax(
-      int driveMotorCanId, int steerMotorCanId, int encoderId, double motorOffset) {
+  public ModuleIO(int driveMotorCanId, int steerMotorCanId, int encoderId, double motorOffset) {
     driveMotor = new TalonFX(driveMotorCanId, "can0");
     steerMotor = new SparkMax(steerMotorCanId, MotorType.kBrushless);
     encoder = new AnalogEncoder(encoderId, 360, 0);
