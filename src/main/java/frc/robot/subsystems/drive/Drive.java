@@ -1,6 +1,7 @@
 package frc.robot.subsystems.drive;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -13,6 +14,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 
 public class Drive extends SubsystemBase {
   // placeholder dimensions
@@ -39,6 +41,9 @@ public class Drive extends SubsystemBase {
   private Field2d field;
   private SwerveDrivePoseEstimator poseEstimator;
 
+  private PIDController snakePIDController;
+  private double snakeAngleVector = 0;
+
   public Drive() {
     frontLeftLocation = new Translation2d(robotWidth / 2, robotLength / 2);
     frontRightLocation = new Translation2d(robotWidth / 2, -robotLength / 2);
@@ -52,6 +57,9 @@ public class Drive extends SubsystemBase {
     backRightModule = new ModuleIOSparkMax(16, 17, 3, 0.0);
 
     kinematics = new SwerveDriveKinematics(getModuleTranslations());
+
+    snakePIDController = new PIDController(3, 0, 0);
+    snakePIDController.enableContinuousInput(-Math.PI, Math.PI);
 
     // change for type of gyro and id
     gyro = new Pigeon2(0);
@@ -69,31 +77,89 @@ public class Drive extends SubsystemBase {
     return Rotation2d.fromRadians(getGyroRadians());
   }
 
-  public void drive(ChassisSpeeds chassisSpeeds) {
-    ChassisSpeeds fieldSpeeds =
-        ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds, getGyroRotation2d());
-    ChassisSpeeds discreteSpeeds = ChassisSpeeds.discretize(fieldSpeeds, 0.02);
+  public void drive(ChassisSpeeds fieldSpeeds) {
+    System.out.println(fieldSpeeds.omegaRadiansPerSecond);
+    switch (Constants.currentMode) {
+      case REAL:
+        ChassisSpeeds chassisSpeeds =
+            ChassisSpeeds.discretize(
+                ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, getGyroRotation2d()), 0.02);
+        SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds);
+        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, 1);
 
-    SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(discreteSpeeds);
-    SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, 1);
+        frontLeftModule.setState(moduleStates[0]);
+        frontRightModule.setState(moduleStates[1]);
+        backLeftModule.setState(moduleStates[2]);
+        backRightModule.setState(moduleStates[3]);
+        break;
 
-    frontLeftModule.setState(moduleStates[0]);
-    frontRightModule.setState(moduleStates[1]);
-    backLeftModule.setState(moduleStates[2]);
-    backRightModule.setState(moduleStates[3]);
+      case SIM:
+        ChassisSpeeds simSpeeds =
+            ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, robotPose.getRotation());
+        // divide by 50 is to account for 20ms loop. 50 loops in a second.
+        double modX = simSpeeds.vxMetersPerSecond / 50;
+        double modY = simSpeeds.vyMetersPerSecond / 50;
+        Rotation2d modOmega = Rotation2d.fromRadians(simSpeeds.omegaRadiansPerSecond / 50);
+
+        Transform2d modTransform = new Transform2d(modX, modY, modOmega);
+
+        robotPose = robotPose.plus(modTransform);
+        break;
+
+      default:
+        break;
+    }
   }
 
-  public void driveSim(ChassisSpeeds chassisSpeeds) {
-    ChassisSpeeds fieldSpeeds =
-        ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds, robotPose.getRotation());
-    
-    double modX = fieldSpeeds.vxMetersPerSecond / 50;
-    double modY = fieldSpeeds.vyMetersPerSecond / 50;
-    Rotation2d modOmega = Rotation2d.fromRadians(fieldSpeeds.omegaRadiansPerSecond / 50);
+  public void driveSnake(ChassisSpeeds fieldSpeeds) {
+    double vecX = fieldSpeeds.vxMetersPerSecond;
+    double vecY = fieldSpeeds.vyMetersPerSecond;
 
-    Transform2d modTransform = new Transform2d(modX, modY, modOmega);
+    if (Math.hypot(vecX, vecY) > 0) {
+      snakeAngleVector = Math.atan2(vecY, vecX);
+    }
 
-    robotPose = robotPose.plus(modTransform);
+    switch (Constants.currentMode) {
+      case REAL:
+        ChassisSpeeds chassisSpeeds =
+            ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, getGyroRotation2d());
+
+        double x = chassisSpeeds.vxMetersPerSecond;
+        double y = chassisSpeeds.vyMetersPerSecond;
+        double omega = snakePIDController.calculate(getGyroRadians(), snakeAngleVector);
+
+        ChassisSpeeds snakeSpeeds = ChassisSpeeds.discretize(new ChassisSpeeds(x, y, omega), 0.02);
+
+        SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(snakeSpeeds);
+        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, 1);
+
+        frontLeftModule.setState(moduleStates[0]);
+        frontRightModule.setState(moduleStates[1]);
+        backLeftModule.setState(moduleStates[2]);
+        backRightModule.setState(moduleStates[3]);
+        break;
+
+      case SIM:
+        ChassisSpeeds simSpeeds =
+            ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, robotPose.getRotation());
+
+        Rotation2d modOmega =
+            Rotation2d.fromRadians(
+                snakePIDController.calculate(robotPose.getRotation().getRadians(), snakeAngleVector)
+                    / 50);
+
+        // divide by 50 is to account for 20ms loop. 50 loops in a second.
+        double modX = simSpeeds.vxMetersPerSecond / 50;
+        double modY = simSpeeds.vyMetersPerSecond / 50;
+
+        Transform2d modTransform = new Transform2d(modX, modY, modOmega);
+
+        robotPose = robotPose.plus(modTransform);
+        break;
+
+      default:
+        break;
+    }
   }
 
   public void updateRobotPose() {
@@ -113,10 +179,7 @@ public class Drive extends SubsystemBase {
     // if recentPose is not none
     //  poseEstimator.addVisionMeasurement(recentPose, vision.timestamp)
     // updateRobotPose()
-    frontLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
-    frontRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
-    backLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
-    backRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+
   }
 
   public void stop() {
@@ -124,7 +187,10 @@ public class Drive extends SubsystemBase {
   }
 
   public void stopWithX() {
-
+    frontLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+    frontRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
+    backLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
+    backRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
     stop();
   }
 

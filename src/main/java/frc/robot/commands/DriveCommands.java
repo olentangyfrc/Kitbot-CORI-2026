@@ -4,41 +4,46 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
 import java.util.function.DoubleSupplier;
 
 public class DriveCommands {
-  public static final double DEADBAND = 0.1;
+  public static final double DEADBAND = 0.25;
 
   private DriveCommands() {}
 
   public static Command joystickDrive(
       Drive drive, DoubleSupplier x, DoubleSupplier y, DoubleSupplier omega) {
-    System.out.println("ran joystickdrive");
     return Commands.run(
         () -> {
-          double xspeed = MathUtil.applyDeadband(x.getAsDouble(), DEADBAND) * 3;
-          double yspeed = MathUtil.applyDeadband(y.getAsDouble(), DEADBAND) * 3;
-          double omegaspeed = MathUtil.applyDeadband(omega.getAsDouble(), DEADBAND) * 6;
+          double xspeed = MathUtil.applyDeadband(x.getAsDouble(), DEADBAND);
+          double yspeed = MathUtil.applyDeadband(y.getAsDouble(), DEADBAND);
+          double omegaspeed = MathUtil.applyDeadband(omega.getAsDouble(), DEADBAND);
 
-          Math.copySign(xspeed * xspeed, xspeed);
-          Math.copySign(yspeed * yspeed, yspeed);
-          Math.copySign(omegaspeed * omegaspeed, omegaspeed);
+          xspeed = Math.copySign(xspeed * xspeed, xspeed) * 3;
+          yspeed = Math.copySign(yspeed * yspeed, yspeed) * 3;
+          omegaspeed = Math.copySign(omegaspeed * omegaspeed, omegaspeed) * 6;
 
           ChassisSpeeds chassisSpeeds = new ChassisSpeeds(xspeed, yspeed, omegaspeed);
-          switch (Constants.currentMode) {
-            case REAL:
-              drive.drive(chassisSpeeds);
-              break;
+          drive.drive(chassisSpeeds);
+        },
+        drive);
+  }
 
-            case SIM:
-              drive.driveSim(chassisSpeeds);
-              break;
+  public static Command joystickDriveSnake(
+      Drive drive, DoubleSupplier x, DoubleSupplier y, DoubleSupplier omega) {
+    return Commands.run(
+        () -> {
+          double xspeed = MathUtil.applyDeadband(x.getAsDouble(), DEADBAND);
+          double yspeed = MathUtil.applyDeadband(y.getAsDouble(), DEADBAND);
+          double omegaspeed = MathUtil.applyDeadband(omega.getAsDouble(), DEADBAND);
 
-            default:
-              break;
-          }
+          xspeed = Math.copySign(xspeed * xspeed, xspeed) * 3;
+          yspeed = Math.copySign(yspeed * yspeed, yspeed) * 3;
+          omegaspeed = Math.copySign(omegaspeed * omegaspeed, omegaspeed) * 6;
+
+          ChassisSpeeds chassisSpeeds = new ChassisSpeeds(xspeed, yspeed, omegaspeed);
+          drive.driveSnake(chassisSpeeds);
         },
         drive);
   }

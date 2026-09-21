@@ -112,6 +112,14 @@ public class RobotContainer {
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
+    // Snake command, front is always forwards
+    // if (controller.a().getAsBoolean()) {
+    //   DriveCommands.joystickDriveSnake(
+    //       drive,
+    //       () -> -controller.getLeftY(),
+    //       () -> -controller.getLeftX(),
+    //       () -> -controller.getRightX());
+    // }
 
     if (controller.rightTrigger().getAsBoolean()) {
       // Commands.runOnce(ShooterCommands.)

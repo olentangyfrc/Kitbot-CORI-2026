@@ -21,10 +21,13 @@ public class ModuleIOSparkMax extends SubsystemBase {
   private double offset;
 
   private PIDController steerPIDController;
+  private double steerP = 0;
+  private double steerI = 0;
+  private double steerD = 0;
 
   // odometry stuff, need change later
   private double wheelRadius = 4;
-  private double gearRatio = 3/1;
+  private double gearRatio = 3 / 1;
   private double encoderResolution = 400;
 
   public ModuleIOSparkMax(
@@ -45,7 +48,7 @@ public class ModuleIOSparkMax extends SubsystemBase {
     steerMotor.configure(
         steerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-    steerPIDController = new PIDController(0, 0, 0);
+    steerPIDController = new PIDController(steerP, steerI, steerD);
     steerPIDController.enableContinuousInput(-180, 180);
   }
 
