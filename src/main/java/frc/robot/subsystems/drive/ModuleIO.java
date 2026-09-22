@@ -30,11 +30,11 @@ public class ModuleIO extends SubsystemBase {
   private double steerD = 0;
 
   // odometry stuff, need change later
-  private double wheelRadius = 4;
+  private double wheelRadius = 2;
   private double gearRatio = 3 / 1;
   private double encoderResolution = 400;
 
-  private double driveVelocity;
+  private double driveVelocity; // meters per second
   private Rotation2d steerAngle;
 
   public ModuleIO(int driveMotorCanId, int steerMotorCanId, int encoderId, double motorOffset) {
@@ -56,10 +56,6 @@ public class ModuleIO extends SubsystemBase {
     steerPIDController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
-  public double getEncoderRadians() {
-    return encoder.get() + offset;
-  }
-
   public void setState(SwerveModuleState state) {
     Rotation2d encoderRotation2d = new Rotation2d(getEncoderRadians());
 
@@ -74,12 +70,16 @@ public class ModuleIO extends SubsystemBase {
     double driveOutput = state.speedMetersPerSecond;
 
     driveMotor.setVoltage(driveOutput);
-    driveMotor.setVoltage(steerOutput);
+    steerMotor.setVoltage(steerOutput);
+  }
+
+  public double getEncoderRadians() {
+    return encoder.get() + offset;
   }
 
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(
-        (driveMotor.getPosition().getValueAsDouble() * wheelRadius * Math.PI * 2 * gearRatio)
+        (driveMotor.getPosition().getValueAsDouble() / gearRatio * wheelRadius * Math.PI * 2)
             / encoderResolution,
         Rotation2d.fromRadians(getEncoderRadians()));
   }

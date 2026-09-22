@@ -1,6 +1,7 @@
 package frc.robot.subsystems.drive;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -10,6 +11,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -44,7 +47,7 @@ public class Drive extends SubsystemBase {
 
   // odometry stuff
   private Pose2d robotPose = new Pose2d();
-  private ChassisSpeeds simSpeeds = new ChassisSpeeds();
+  private ChassisSpeeds chassisSpeeds = new ChassisSpeeds();
   // private Pose2d recentPose;
   private Field2d field = new Field2d();
   private SwerveDrivePoseEstimator poseEstimator;
@@ -91,7 +94,7 @@ public class Drive extends SubsystemBase {
     ChassisSpeeds chassisSpeeds =
         ChassisSpeeds.discretize(
             ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, getRotation()), 0.02);
-    simSpeeds = chassisSpeeds;
+    this.chassisSpeeds = chassisSpeeds;
 
     switch (Constants.currentMode) {
       case REAL:
@@ -120,22 +123,48 @@ public class Drive extends SubsystemBase {
     }
   }
 
-  public void updateRobotPose() {
-    modulePositions[0] = frontLeftModule.getPosition();
-    modulePositions[1] = frontRightModule.getPosition();
-    modulePositions[2] = backLeftModule.getPosition();
-    modulePositions[3] = backRightModule.getPosition();
-
-    robotPose = poseEstimator.update(getRotation(), modulePositions);
+  public Pose2d getPose() {
+    switch (Constants.currentMode) {
+      case REAL:
+        return poseEstimator.getEstimatedPosition();
+      case SIM:
+        return robotPose;
+      default:
+        return new Pose2d();
+    }
   }
 
-  public void updatePoseEstimator() {
-    // vision pseudo code
-    // recentPose = vision.get_pose
-    // if recentPose is not none
-    //  poseEstimator.addVisionMeasurement(recentPose, vision.timestamp)
-    // updateRobotPose()
+  public void updateRobotPose() {
+    switch (Constants.currentMode) {
+      case REAL:
+        modulePositions[0] = frontLeftModule.getPosition();
+        modulePositions[1] = frontRightModule.getPosition();
+        modulePositions[2] = backLeftModule.getPosition();
+        modulePositions[3] = backRightModule.getPosition();
 
+        robotPose = poseEstimator.update(getRotation(), modulePositions);
+        break;
+      case SIM:
+        break;
+      default:
+        break;
+    }
+  }
+
+  public void addVisionMeasurment(
+      Pose2d visionRobotPoseMeters,
+      double timestampSeconds,
+      Matrix<N3, N1> visionMeasurementStdDevs) {
+    switch (Constants.currentMode) {
+      case REAL:
+        poseEstimator.addVisionMeasurement(
+            visionRobotPoseMeters, timestampSeconds, visionMeasurementStdDevs);
+        break;
+      case SIM:
+        break;
+      default:
+        break;
+    }
   }
 
   public void stop() {
@@ -143,10 +172,18 @@ public class Drive extends SubsystemBase {
   }
 
   public void stopWithX() {
-    frontLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
-    frontRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
-    backLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
-    backRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+    switch (Constants.currentMode) {
+      case REAL:
+        frontLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+        frontRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
+        backLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
+        backRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+        break;
+      case SIM:
+        break;
+      default:
+        break;
+    }
     stop();
   }
 
@@ -161,7 +198,7 @@ public class Drive extends SubsystemBase {
       case REAL:
         return kinematics.toChassisSpeeds(getModuleStates());
       case SIM:
-        return simSpeeds;
+        return chassisSpeeds;
       default:
         return new ChassisSpeeds();
     }
@@ -180,13 +217,13 @@ public class Drive extends SubsystemBase {
     return new Translation2d(4.6, 4);
   }
 
-  // call empty, uses default params, with input gets specified distance or angle
+  // call empty, uses default params, but with input gets specified distance or angle
   public double getDistanceFromHub() {
     return getDistanceFromHub(getHubPosition());
   }
 
   public double getDistanceFromHub(Translation2d position) {
-    return robotPose.getTranslation().getDistance(position);
+    return getPose().getTranslation().getDistance(position);
   }
 
   public double getDistanceFromVirtualHub() {
@@ -198,7 +235,7 @@ public class Drive extends SubsystemBase {
   }
 
   public Rotation2d getRotationToHub(Translation2d position) {
-    Translation2d currentTranslation = robotPose.getTranslation();
+    Translation2d currentTranslation = getPose().getTranslation();
     return position.minus(currentTranslation).getAngle();
   }
 
@@ -208,7 +245,7 @@ public class Drive extends SubsystemBase {
 
   // shoot on the move stuff
   public Translation2d getVirtualHubPosition() {
-    Translation2d robotTranslation = robotPose.getTranslation();
+    Translation2d robotTranslation = getPose().getTranslation();
     ChassisSpeeds fieldSpeeds =
         ChassisSpeeds.fromRobotRelativeSpeeds(getChassisSpeeds(), getRotation());
     Translation2d hubPosition = getHubPosition();
@@ -237,6 +274,6 @@ public class Drive extends SubsystemBase {
     SmartDashboard.putNumber("virtual hub x", getVirtualHubPosition().getX());
     SmartDashboard.putNumber("virtual hub y", getVirtualHubPosition().getY());
 
-    // updateRobotPose();
+    updateRobotPose();
   }
 }
