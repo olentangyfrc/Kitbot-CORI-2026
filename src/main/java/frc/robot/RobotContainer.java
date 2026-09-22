@@ -15,6 +15,7 @@ import frc.robot.commands.DriveCommands;
 import frc.robot.commands.ShooterCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.vision.Vision;
 
 // import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -28,6 +29,7 @@ public class RobotContainer {
   // Subsystems
   private final Drive drive;
   private final Shooter shooter;
+  private final Vision vision;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -42,24 +44,26 @@ public class RobotContainer {
         // Real robot, instantiate hardware IO implementations
         drive = new Drive();
         shooter = new Shooter();
+        vision = new Vision(drive, "limelight");
         break;
 
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
         drive = new Drive();
         shooter = new Shooter();
-
+        vision = new Vision(drive, "limelight");
         break;
 
       default:
         // Replayed robot, disable IO implementations
         drive = new Drive();
         shooter = new Shooter();
-
+        vision = new Vision(drive, "limelight");
         break;
     }
 
     shooter.init();
+    vision.setup();
     // Set up auto routines
     // autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
     // autoChooser = null;
