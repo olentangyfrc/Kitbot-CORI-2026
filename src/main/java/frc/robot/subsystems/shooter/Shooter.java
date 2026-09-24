@@ -8,8 +8,12 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 // shooter and intake are controlled by the same motor. indexer in same subsystem.
 public class Shooter extends SubsystemBase {
+  // tune
+  private double spinUpVelocity = 1500;
+  private double shootMaxVelocity = 3000;
+  private double intakeMaxVelocity = -2000;
+  private double indexerMaxVelocity = 500;
 
-  private double spinUpVelocity = 2000;
   private double shooterVelocityTolerance = 25;
 
   private TalonFXConfiguration shooterConfig;
@@ -52,7 +56,11 @@ public class Shooter extends SubsystemBase {
     indexerMotor = new TalonFX(indexerCanId, "can0");
   }
 
-  public void setIndexerSpeed(double speed) {
+  public void setShooterSpeed(double speed) { // input rps
+    shooterMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(speed));
+  }
+
+  public void setIndexerSpeed(double speed) { // input rps
     indexerMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(speed));
   }
 
@@ -73,16 +81,31 @@ public class Shooter extends SubsystemBase {
     indexerMotor.setControl(new com.ctre.phoenix6.controls.VoltageOut(0.0));
   }
 
+  public void eject() {
+    setShooterSpeed(-intakeMaxVelocity);
+    setIndexerSpeed(-indexerMaxVelocity);
+  }
+
+  // public void shoot() {
+  //   setShooterSpeed(shootMaxVelocity);
+  // }
+
+  public void shootForHub(double distanceMeters) {
+    ShooterUtil.ShooterParameters params = ShooterUtil.getInterpolatedValues(distanceMeters);
+    setShooterSpeed(params.shooterRpm() * 60); // setShooterSpeed takes RPS
+  }
+
   public void spinUp() {
     setShooterSpeed(spinUpVelocity);
   }
 
-  public void setShooterSpeed(double speed) { // input rps
-    shooterMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(speed));
+  public void intake() {
+    setShooterSpeed(intakeMaxVelocity);
+    setIndexerSpeed(indexerMaxVelocity);
   }
 
-  public void setIntakeSpeed(double speed) { // input rps
-    shooterMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(-speed));
+  public void indexerShoot() {
+    setIndexerSpeed(-indexerMaxVelocity);
   }
 
   public boolean isShooterAtSpeed() {

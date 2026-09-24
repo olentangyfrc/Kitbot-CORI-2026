@@ -2,29 +2,18 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.shooter.Shooter;
 
 public class ShooterCommands {
-  static double shooterShootingSpeed = 200; // change later
-  static double shooterIntakingSpeed = 100; // change later
-
-  static double indexerShootingSpeed = -60; // change later
-  static double indexerIntakingSpeed = 60; // change later
 
   Shooter shooter;
+  Drive drive;
 
   public static Command setShooterVelocity(Shooter shooter, double velocity) {
     return Commands.run(
         () -> {
           shooter.setShooterSpeed(velocity);
-        },
-        shooter);
-  }
-
-  public static Command setIntakeVelocity(Shooter shooter, double velocity) {
-    return Commands.run(
-        () -> {
-          shooter.setIntakeSpeed(velocity);
         },
         shooter);
   }
@@ -45,27 +34,33 @@ public class ShooterCommands {
         shooter);
   }
 
+  public static Command shoot(Shooter shooter, Drive drive) {
+    return Commands.run(
+        () -> {
+          double distance = drive.getDistanceFromVirtualHub();
+          shooter.shootForHub(distance);
+
+          if (shooter.isShooterAtSpeed() && drive.isRobotFacingVirtualHub()) {
+            shooter.indexerShoot();
+          } else {
+            shooter.holdIndexer();
+          }
+        },
+        shooter);
+  }
+
   public static Command spinUp(Shooter shooter) {
     return Commands.run(
-            () -> {
-              shooter.setShooterSpeed(shooterShootingSpeed);
-            },
-            shooter)
-        .until(() -> shooter.isShooterAtSpeed())
-        .andThen(
-            Commands.run(
-                () -> {
-                  shooter.setShooterSpeed(shooterShootingSpeed);
-                  shooter.setIndexerSpeed(indexerShootingSpeed);
-                },
-                shooter));
+        () -> {
+          shooter.spinUp();
+        },
+        shooter);
   }
 
   public static Command intake(Shooter shooter) {
     return Commands.run(
         () -> {
-          shooter.setIntakeSpeed(shooterIntakingSpeed);
-          shooter.setIndexerSpeed(indexerIntakingSpeed);
+          shooter.intake();
         },
         shooter);
   }
@@ -73,8 +68,7 @@ public class ShooterCommands {
   public static Command eject(Shooter shooter) {
     return Commands.run(
         () -> {
-          shooter.setIntakeSpeed(-shooterIntakingSpeed);
-          shooter.setIndexerSpeed(-indexerIntakingSpeed);
+          shooter.eject();
         },
         shooter);
   }

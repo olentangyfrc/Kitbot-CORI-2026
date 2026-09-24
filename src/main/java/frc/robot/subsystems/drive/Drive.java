@@ -52,6 +52,8 @@ public class Drive extends SubsystemBase {
   private Field2d field = new Field2d();
   private SwerveDrivePoseEstimator poseEstimator;
 
+  private double angleTolerance = 3;
+
   public Drive() {
     frontLeftLocation = new Translation2d(robotWidth / 2, robotLength / 2);
     frontRightLocation = new Translation2d(robotWidth / 2, -robotLength / 2);
@@ -266,6 +268,20 @@ public class Drive extends SubsystemBase {
               hubPosition.getY() - fieldSpeeds.vyMetersPerSecond * timeOfFlight);
     }
     return virtualTarget;
+  }
+
+  public boolean isRobotFacingHub() {
+    return isRobotFacingHub(getHubPosition());
+  }
+
+  public boolean isRobotFacingHub(Translation2d position) {
+    double currentAngle = getPose().getRotation().getRadians();
+    double targetAngle = getDistanceFromHub(position);
+    return (Math.abs(targetAngle - currentAngle) < angleTolerance);
+  }
+
+  public boolean isRobotFacingVirtualHub() {
+    return isRobotFacingHub(getVirtualHubPosition());
   }
 
   public void periodic() {
