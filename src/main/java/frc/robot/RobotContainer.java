@@ -35,44 +35,18 @@ public class RobotContainer {
   // Dashboard inputs
   // private final LoggedDashboardChooser<Command> autoChooser;
 
-  /** The container for the robot. Contains subsystems, OI devices, and commands. */
+  /** The container for the robot. Contains subsystems, IO devices, and commands. */
   public RobotContainer() {
     switch (Constants.currentMode) {
       case REAL:
         // Real robot, instantiate hardware IO implementations
-        // ModuleIOTalonFX is intended for modules with TalonFX drive, TalonFX turn, and
-        // a CANcoder
         drive = new Drive();
-
-        // The ModuleIOTalonFXS implementation provides an example implementation for
-        // TalonFXS controller connected to a CANdi with a PWM encoder. The
-        // implementations
-        // of ModuleIOTalonFX, ModuleIOTalonFXS, and ModuleIOSpark (from the Spark
-        // swerve
-        // template) can be freely intermixed to support alternative hardware
-        // arrangements.
-        // Please see the AdvantageKit template documentation for more information:
-        // https://docs.advantagekit.org/getting-started/template-projects/talonfx-swerve-template#custom-module-implementations
-        //
-        // drive =
-        // new Drive(
-        // new GyroIOPigeon2(),
-        // new ModuleIOTalonFXS(TunerConstants.FrontLeft),
-        // new ModuleIOTalonFXS(TunerConstants.FrontRight),
-        // new ModuleIOTalonFXS(TunerConstants.BackLeft),
-        // new ModuleIOTalonFXS(TunerConstants.BackRight));
         shooter = new Shooter();
         break;
 
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
         drive = new Drive();
-        //     new Drive(
-        //         new GyroIO() {},
-        //         new ModuleIOSim(TunerConstants.FrontLeft),
-        //         new ModuleIOSim(TunerConstants.FrontRight),
-        //         new ModuleIOSim(TunerConstants.BackLeft),
-        //         new ModuleIOSim(TunerConstants.BackRight));
         shooter = new Shooter();
 
         break;
@@ -80,11 +54,6 @@ public class RobotContainer {
       default:
         // Replayed robot, disable IO implementations
         drive = new Drive();
-        //     new GyroIO() {},
-        //     new ModuleIO() {},
-        //     new ModuleIO() {},
-        //     new ModuleIO() {},
-        //     new ModuleIO() {});
         shooter = new Shooter();
 
         break;
@@ -111,55 +80,44 @@ public class RobotContainer {
             drive,
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+            // temporary fix for some random bug
+            () -> -controller.getRawAxis(2)
+            // () -> -controller.getRightX()
+            ));
 
-    if (controller.rightTrigger().getAsBoolean()) {
-      // Commands.runOnce(ShooterCommands.)
-      // point to hub (optional)
-      // spin up shooter
-      // wait for shooter to get up to speed
-      // run indexers
-    }
-    ;
+    shooter.setDefaultCommand(ShooterCommands.stop(shooter));
+    // Snake command, front is always forwards
+    controller
+        .a()
+        .whileTrue(
+            DriveCommands.joystickDriveSnake(
+                drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
+    // unused point to hub code, shoot on move is better
+    // controller
+    //     .x()
+    //     .whileTrue(
+    //         DriveCommands.pointToHub(
+    //             drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
+    controller
+        .rightTrigger(0.35)
+        .whileTrue(
+            DriveCommands.shootOnTheMove(
+                drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
 
-    if (controller.leftTrigger().getAsBoolean()) {
-      ShooterCommands.setIntakeVelocity(shooter, 500);
-      ShooterCommands.setIndexerVelocity(shooter, 500);
-    }
+    // point to hub
+    // spin up shooter
+    // wait for shooter to get up to speed
+    // run indexers
+    controller.rightTrigger(0.35).whileTrue(ShooterCommands.spinUp(shooter));
+    controller.rightTrigger(0.35).whileFalse(ShooterCommands.stop(shooter));
 
-    if (controller.b().getAsBoolean()) {
-      ShooterCommands.setIntakeVelocity(shooter, -500);
-      ShooterCommands.setIndexerVelocity(shooter, -500);
-    }
-    ;
+    controller.leftTrigger().whileTrue(ShooterCommands.intake(shooter));
+
+    controller.b().whileTrue(ShooterCommands.eject(shooter));
+
+    controller.start().whileTrue(DriveCommands.resetGyro(drive));
   }
   ;
-
-  // Lock to 0° when A button is held
-
-  // controller
-  //     .a()
-  //     .whileTrue(
-  //         DriveCommands.joystickDriveAtAngle(
-  //             drive,
-  //             () -> controller.getLeftY(),
-  //             () -> controller.getLeftX(),
-  //             () -> Rotation2d.fromDegrees(180)));
-
-  // // Switch to X pattern when X button is pressed
-  // controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
-
-  // Reset gyro to 0° when B button is pressed
-  //   controller
-  //       .b()
-  //       .onTrue(
-  //           Commands.runOnce(
-  //                   () ->
-  //                       drive.setPose(
-  //                           new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
-  //                   drive)
-  //               .ignoringDisable(true));
-  // }
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
