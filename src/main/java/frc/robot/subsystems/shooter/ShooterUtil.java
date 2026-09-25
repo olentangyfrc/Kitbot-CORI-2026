@@ -25,7 +25,12 @@ public class ShooterUtil {
   }
 
   private ShooterUtil() {}
-
+  /**
+   * Gets shooter RPM based on distance to the hub using an interpolation table.
+   *
+   * @param distanceMeters
+   * @return Shooter speed in RPM.
+   */
   public static ShooterParameters getInterpolatedValues(double distanceMeters) {
     double rpm = Math.floor(rpmMap.get(distanceMeters));
     return new ShooterParameters(rpm);

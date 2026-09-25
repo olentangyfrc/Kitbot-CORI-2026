@@ -55,32 +55,40 @@ public class Shooter extends SubsystemBase {
     indexerConfig.Slot0.kA = 0;
     indexerMotor.getConfigurator().apply(indexerConfig, 0.25);
   }
-
+  /**
+   * Sets shooter motor speed in RPS.
+   *
+   * @param speed
+   */
   public void setShooterSpeed(double speed) { // input rps
     shooterMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(speed));
   }
-
+  /**
+   * Sets indexer motor speed in RPS.
+   *
+   * @param speed
+   */
   public void setIndexerSpeed(double speed) { // input rps
     indexerMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(speed));
   }
-
+  /** Holds indexer motor in place, without rotation. */
   public void holdIndexer() {
     indexerMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(0.0));
   }
-
+  /** Cuts power to indexer motor and lets it freely rotate. */
   public void stopIndexer() {
     indexerMotor.setControl(new com.ctre.phoenix6.controls.VoltageOut(0.0));
   }
-
+  /** Cuts power to shooter motor and lets it freely rotate. */
   public void stopShooter() {
     shooterMotor.setControl(new com.ctre.phoenix6.controls.VoltageOut(0.0));
   }
-
+  /** Cuts power to shooter and indexer motor. */
   public void stop() {
     shooterMotor.setControl(new com.ctre.phoenix6.controls.VoltageOut(0.0));
     indexerMotor.setControl(new com.ctre.phoenix6.controls.VoltageOut(0.0));
   }
-
+  /** Runs shooter and indexer motor so fuel is ejected out of intake. */
   public void eject() {
     setShooterSpeed(-intakeMaxVelocity);
     setIndexerSpeed(-indexerMaxVelocity);
@@ -90,34 +98,52 @@ public class Shooter extends SubsystemBase {
   //   setShooterSpeed(shootMaxVelocity);
   // }
 
+  /**
+   * Sets shooter speed to correct value based off distance. Uses an interpolation table to
+   * calculate speed.
+   *
+   * @param distanceMeters
+   */
   public void shootForHub(double distanceMeters) {
     ShooterUtil.ShooterParameters params = ShooterUtil.getInterpolatedValues(distanceMeters);
     // min to not go over max
     setShooterSpeed(
         Math.min(params.shooterRpm() * 60, shootMaxVelocity)); // setShooterSpeed takes RPS
   }
-
+  /** Runs shooter motor at a slower speed. */
   public void spinUp() {
     setShooterSpeed(spinUpVelocity);
   }
-
+  /** Runs the shooter and the indexer to intake. */
   public void intake() {
     setShooterSpeed(intakeMaxVelocity);
     setIndexerSpeed(indexerMaxVelocity);
   }
-
+  /** Runs the indexer to shoot */
   public void indexerShoot() {
     setIndexerSpeed(-indexerMaxVelocity);
   }
-
+  /**
+   * Checks if the shooter's current speed is within tolerance of the target speed.
+   *
+   * @return True if shooter speed is within tolerance.
+   */
   public boolean isShooterAtSpeed() {
     return shooterMotor.getClosedLoopError().getValueAsDouble() < shooterVelocityTolerance;
   }
-
+  /**
+   * Gets the current shooter speed.
+   *
+   * @return Current shooter speed in RPS.
+   */
   public double getShooterSpeed() {
     return shooterMotor.getVelocity().getValueAsDouble();
   }
-
+  /**
+   * Gets the shooter target speed.
+   *
+   * @return Shooter target speed in RPS.
+   */
   public double getShooterTargetSpeed() {
     return shooterMotor.getClosedLoopReference().getValueAsDouble();
   }

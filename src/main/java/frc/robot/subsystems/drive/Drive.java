@@ -14,6 +14,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -50,6 +51,7 @@ public class Drive extends SubsystemBase {
   private ChassisSpeeds chassisSpeeds = new ChassisSpeeds();
   // private Pose2d recentPose;
   private final Field2d field = new Field2d();
+  private final FieldObject2d virtualHub = field.getObject("virtualHub");
   private SwerveDrivePoseEstimator poseEstimator;
 
   private final double angleTolerance = 3;
@@ -75,7 +77,11 @@ public class Drive extends SubsystemBase {
     poseEstimator =
         new SwerveDrivePoseEstimator(kinematics, getRotation(), modulePositions, robotPose);
   }
-
+  /**
+   * Gets current rotation of the robot.
+   *
+   * @return Robot Gyro or pose rotation
+   */
   public Rotation2d getRotation() {
     switch (Constants.currentMode) {
       case REAL:
@@ -86,12 +92,16 @@ public class Drive extends SubsystemBase {
         return new Rotation2d();
     }
   }
-
+  /** Resets robot gyro and pose rotation to 0. */
   public void resetGyro() {
     gyro.reset();
     robotPose = new Pose2d(robotPose.getX(), robotPose.getY(), Rotation2d.kZero);
   }
-
+  /**
+   * Drives the robot by translating chassis speeds into swerve module signals.
+   *
+   * @param fieldSpeeds
+   */
   public void drive(ChassisSpeeds fieldSpeeds) {
     ChassisSpeeds chassisSpeeds =
         ChassisSpeeds.discretize(
@@ -124,7 +134,7 @@ public class Drive extends SubsystemBase {
         break;
     }
   }
-
+  /** Gets current pose estimator pose or sim pose. */
   public Pose2d getPose() {
     switch (Constants.currentMode) {
       case REAL:
@@ -135,7 +145,7 @@ public class Drive extends SubsystemBase {
         return new Pose2d();
     }
   }
-
+  /** Updates pose estimator with swerve module positions. */
   public void updateRobotPose() {
     switch (Constants.currentMode) {
       case REAL:
@@ -152,7 +162,13 @@ public class Drive extends SubsystemBase {
         break;
     }
   }
-
+  /**
+   * Adds data from limelight tracking to the pose estimator.
+   *
+   * @param visionRobotPoseMeters
+   * @param timestampSeconds
+   * @param visionMeasurementStdDevs
+   */
   public void addVisionMeasurment(
       Pose2d visionRobotPoseMeters,
       double timestampSeconds,
@@ -168,11 +184,11 @@ public class Drive extends SubsystemBase {
         break;
     }
   }
-
+  /** Cuts power to drivetrain. */
   public void stop() {
     drive(new ChassisSpeeds());
   }
-
+  /** Cuts power to drivetrain, but with swerve modules angled in an x to prevent movement. */
   public void stopWithX() {
     switch (Constants.currentMode) {
       case REAL:
@@ -188,13 +204,21 @@ public class Drive extends SubsystemBase {
     }
     stop();
   }
-
+  /**
+   * Gets positions of swerve modules in relation to the center of the robot.
+   *
+   * @return
+   */
   public Translation2d[] getModuleTranslations() {
     return new Translation2d[] {
       frontLeftLocation, frontRightLocation, backLeftLocation, backRightLocation
     };
   }
-
+  /**
+   * Gets current chassis speeds using kinematic or sent chassis speeds in sim.
+   *
+   * @return A chassisspeeds object
+   */
   public ChassisSpeeds getChassisSpeeds() {
     switch (Constants.currentMode) {
       case REAL:
@@ -205,7 +229,11 @@ public class Drive extends SubsystemBase {
         return new ChassisSpeeds();
     }
   }
-
+  /**
+   * Gets swerve module states.
+   *
+   * @return A list of swerve module states
+   */
   public SwerveModuleState[] getModuleStates() {
     return new SwerveModuleState[] {
       frontLeftModule.getState(),
@@ -215,37 +243,40 @@ public class Drive extends SubsystemBase {
     };
   }
 
+  /** Returns the Pose2d of the Hub. */
   public Translation2d getHubPosition() {
     return new Translation2d(4.6, 4);
   }
-
-  // call empty, uses default params, but with input gets specified distance or angle
+  /** Gets distance in meters from current pose to the Hub. */
   public double getDistanceFromHub() {
     return getDistanceFromHub(getHubPosition());
   }
-
+  /** Gets distance in meters from current pose to a Pose2d. */
   public double getDistanceFromHub(Translation2d position) {
     return getPose().getTranslation().getDistance(position);
   }
-
+  /** Gets distance in meters from current pose to the Virtual Hub. */
   public double getDistanceFromVirtualHub() {
     return getDistanceFromHub(getVirtualHubPosition());
   }
-
+  /** Gets angle from current pose to the Hub. */
   public Rotation2d getRotationToHub() {
     return getRotationToHub(getHubPosition());
   }
-
+  /** Gets angle from current pose to a Pose2d. */
   public Rotation2d getRotationToHub(Translation2d position) {
     Translation2d currentTranslation = getPose().getTranslation();
     return position.minus(currentTranslation).getAngle();
   }
-
+  /** Gets angle from current pose to the Virtual Hub. */
   public Rotation2d getRotationToVirtualHub() {
     return getRotationToHub(getVirtualHubPosition());
   }
 
-  // shoot on the move stuff
+  /**
+   * Gets the position of the Virtual Hub, which is where the robot needs to shoot in order to shoot
+   * on the move.
+   */
   public Translation2d getVirtualHubPosition() {
     Translation2d robotTranslation = getPose().getTranslation();
     ChassisSpeeds fieldSpeeds =
@@ -269,26 +300,60 @@ public class Drive extends SubsystemBase {
     }
     return virtualTarget;
   }
-
+  /**
+   * Sees if the robot is facing the Hub, with a tolerance.
+   *
+   * @return True if angle is within tolerance
+   */
   public boolean isRobotFacingHub() {
     return isRobotFacingHub(getHubPosition());
   }
-
+  /**
+   * Sees if the robot is facing a Pose2d, with a tolerance.
+   *
+   * @return True if angle is within tolerance
+   */
   public boolean isRobotFacingHub(Translation2d position) {
-    double currentAngle = getPose().getRotation().getRadians();
-    double targetAngle = getDistanceFromHub(position);
-    return (Math.abs(targetAngle - currentAngle) < angleTolerance);
-  }
 
+    double currentAngle = getPose().getRotation().getRadians() + Math.PI;
+    double targetAngle = getRotationToHub(position).getRadians();
+    double delta = targetAngle - currentAngle;
+    delta = ((delta + Math.PI) % (2 * Math.PI) + (2 * Math.PI)) % (2 * Math.PI) - Math.PI;
+
+    return (Math.abs(delta) > angleTolerance);
+  }
+  /**
+   * Sees if the robot is facing the Virtual Hub, with a tolerance.
+   *
+   * @return True if angle is within tolerance
+   */
   public boolean isRobotFacingVirtualHub() {
     return isRobotFacingHub(getVirtualHubPosition());
+  }
+  /** Sees if the robot is within distance to shoot at the Hub. */
+  public boolean canShootAtHub() {
+    return (getDistanceFromHub() < 2 && getDistanceFromHub() > 4);
+  }
+  /** Sees if the robot is within distance to shoot at a Pose2d. */
+  public boolean canShootAtHub(Translation2d position, double min, double max) {
+    return (getDistanceFromHub(position) > min && getDistanceFromHub(position) < max);
+  }
+  /** Sees if the robot is within distance to shoot at the Virtual Hub. */
+  public boolean canShootAtVirtualHub() {
+    return (getDistanceFromVirtualHub() > 2 && getDistanceFromVirtualHub() < 4);
   }
 
   public void periodic() {
     field.setRobotPose(robotPose);
-    SmartDashboard.putData(field);
-    SmartDashboard.putNumber("virtual hub x", getVirtualHubPosition().getX());
-    SmartDashboard.putNumber("virtual hub y", getVirtualHubPosition().getY());
+    virtualHub.setPose(
+        getVirtualHubPosition().getX(), getVirtualHubPosition().getY(), new Rotation2d());
+
+    SmartDashboard.putData("poseField", field);
+    SmartDashboard.putNumber("virtualHubX", getVirtualHubPosition().getX());
+    SmartDashboard.putNumber("virtualHubY", getVirtualHubPosition().getY());
+
+    SmartDashboard.putBoolean("IsRobotFacingVirtualHub", isRobotFacingVirtualHub());
+    SmartDashboard.putBoolean("canShootAtVirtualHub", canShootAtVirtualHub());
 
     updateRobotPose();
   }

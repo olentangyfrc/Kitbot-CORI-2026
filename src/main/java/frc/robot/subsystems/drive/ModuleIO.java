@@ -20,7 +20,7 @@ public class ModuleIO extends SubsystemBase {
   private final TalonFX driveMotor;
   private final SparkMax steerMotor;
   private final AnalogEncoder encoder;
-  private final double offset;
+  private final double offset; // radians
 
   private final TalonFXConfiguration driveConfig;
   private final SparkMaxConfig steerConfig;
@@ -28,9 +28,9 @@ public class ModuleIO extends SubsystemBase {
   private final PIDController steerPIDController;
 
   // odometry stuff, need change later
-  private final double wheelRadius = 2;
-  private final double gearRatio = 3 / 1;
-  private final double encoderResolution = 400;
+  private final double wheelRadius = 1.8125; // inches? i think
+  private final double gearRatio = 1 / 8.33; // taken from agnes
+  private final double encoderResolution = 42; // also agnes
 
   private double driveVelocity; // meters per second
   private Rotation2d steerAngle;
@@ -74,14 +74,22 @@ public class ModuleIO extends SubsystemBase {
   public double getEncoderRadians() {
     return encoder.get() + offset;
   }
-
+  /**
+   * Gets the current position of the swerve module. Mostly used for odometry
+   *
+   * @return Distance in meters, module angle.
+   */
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(
-        (driveMotor.getPosition().getValueAsDouble() / gearRatio * wheelRadius * Math.PI * 2)
+        (driveMotor.getPosition().getValueAsDouble() * gearRatio * wheelRadius * Math.PI * 2)
             / encoderResolution,
         Rotation2d.fromRadians(getEncoderRadians()));
   }
-
+  /**
+   * Gets the target state of the swerve module.
+   *
+   * @return Drive velocity, angle.
+   */
   public SwerveModuleState getState() {
     return new SwerveModuleState(driveVelocity, steerAngle);
   }
