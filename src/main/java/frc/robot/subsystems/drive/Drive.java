@@ -19,13 +19,23 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class Drive extends SubsystemBase {
-  // placeholder dimensions
-  private double robotWidth = 2;
-  private double robotLength = 2;
+  // meters
+  private final double robotWidth = 0.8128;
+  private final double robotLength = 0.5842;
 
-  private final Pigeon2 gyro;
+  private Pigeon2 gyro;
 
   private SwerveDriveKinematics kinematics;
+
+  private final ModuleIO frontLeftModule;
+  private final ModuleIO frontRightModule;
+  private final ModuleIO backLeftModule;
+  private final ModuleIO backRightModule;
+
+  private final Translation2d frontLeftLocation;
+  private final Translation2d frontRightLocation;
+  private final Translation2d backLeftLocation;
+  private final Translation2d backRightLocation;
 
   private SwerveModulePosition[] modulePositions =
       new SwerveModulePosition[] {
@@ -35,24 +45,14 @@ public class Drive extends SubsystemBase {
         new SwerveModulePosition()
       };
 
-  private ModuleIO frontLeftModule;
-  private ModuleIO frontRightModule;
-  private ModuleIO backLeftModule;
-  private ModuleIO backRightModule;
-
-  private final Translation2d frontLeftLocation;
-  private final Translation2d frontRightLocation;
-  private final Translation2d backLeftLocation;
-  private final Translation2d backRightLocation;
-
   // odometry stuff
   private Pose2d robotPose = new Pose2d();
   private ChassisSpeeds chassisSpeeds = new ChassisSpeeds();
   // private Pose2d recentPose;
-  private Field2d field = new Field2d();
+  private final Field2d field = new Field2d();
   private SwerveDrivePoseEstimator poseEstimator;
 
-  private double angleTolerance = 3;
+  private final double angleTolerance = 3;
 
   public Drive() {
     frontLeftLocation = new Translation2d(robotWidth / 2, robotLength / 2);
@@ -60,7 +60,7 @@ public class Drive extends SubsystemBase {
     backLeftLocation = new Translation2d(-robotWidth / 2, robotLength / 2);
     backRightLocation = new Translation2d(-robotWidth / 2, -robotLength / 2);
 
-    // change can id
+    // change encoder id, calculate offsets
     frontLeftModule = new ModuleIO(10, 11, 0, 0.0);
     frontRightModule = new ModuleIO(12, 13, 1, 0.0);
     backLeftModule = new ModuleIO(14, 15, 2, 0.0);

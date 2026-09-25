@@ -9,24 +9,29 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 // shooter and intake are controlled by the same motor. indexer in same subsystem.
 public class Shooter extends SubsystemBase {
   // tune
-  private double spinUpVelocity = 1500;
-  private double shootMaxVelocity = 3000;
-  private double intakeMaxVelocity = -2000;
-  private double indexerMaxVelocity = 500;
+  private final double spinUpVelocity = 1500;
+  private final double shootMaxVelocity = 3000;
+  private final double intakeMaxVelocity = -2000;
+  private final double indexerMaxVelocity = 500;
 
-  private double shooterVelocityTolerance = 25;
+  private final double shooterVelocityTolerance = 25;
 
   private TalonFXConfiguration shooterConfig;
   private TalonFXConfiguration indexerConfig;
 
-  private final int shooterCanId = 23; // change later
+  private final int shooterCanId = 20; // change later
   private TalonFX shooterMotor;
 
-  private final int indexerCanId = 45; // change later
+  private final int indexerCanId = 21; // change later
   private TalonFX indexerMotor;
 
-  public void init() {
+  public Shooter() {
+    shooterMotor = new TalonFX(shooterCanId, "can0");
+    indexerMotor = new TalonFX(indexerCanId, "can0");
+    init();
+  }
 
+  public void init() {
     shooterConfig = new TalonFXConfiguration();
     shooterConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     shooterConfig.Slot0 = new com.ctre.phoenix6.configs.Slot0Configs();
@@ -49,11 +54,6 @@ public class Shooter extends SubsystemBase {
     indexerConfig.Slot0.kV = 0;
     indexerConfig.Slot0.kA = 0;
     indexerMotor.getConfigurator().apply(indexerConfig, 0.25);
-  }
-
-  public Shooter() {
-    shooterMotor = new TalonFX(shooterCanId, "can0");
-    indexerMotor = new TalonFX(indexerCanId, "can0");
   }
 
   public void setShooterSpeed(double speed) { // input rps
@@ -92,7 +92,9 @@ public class Shooter extends SubsystemBase {
 
   public void shootForHub(double distanceMeters) {
     ShooterUtil.ShooterParameters params = ShooterUtil.getInterpolatedValues(distanceMeters);
-    setShooterSpeed(params.shooterRpm() * 60); // setShooterSpeed takes RPS
+    // min to not go over max
+    setShooterSpeed(
+        Math.min(params.shooterRpm() * 60, shootMaxVelocity)); // setShooterSpeed takes RPS
   }
 
   public void spinUp() {
@@ -116,7 +118,12 @@ public class Shooter extends SubsystemBase {
     return shooterMotor.getVelocity().getValueAsDouble();
   }
 
+  public double getShooterTargetSpeed() {
+    return shooterMotor.getClosedLoopReference().getValueAsDouble();
+  }
+
   public void periodic() {
-    SmartDashboard.putNumber("shooter rps", getShooterSpeed());
+    SmartDashboard.putNumber("shooter current rps", getShooterSpeed());
+    SmartDashboard.putNumber("shooter target rps", getShooterTargetSpeed());
   }
 }

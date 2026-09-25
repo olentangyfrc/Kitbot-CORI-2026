@@ -17,22 +17,20 @@ import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ModuleIO extends SubsystemBase {
-  private TalonFX driveMotor;
-  private SparkMax steerMotor;
-  private AnalogEncoder encoder;
-  private double offset;
-  private TalonFXConfiguration driveConfig;
-  private SparkMaxConfig steerConfig;
+  private final TalonFX driveMotor;
+  private final SparkMax steerMotor;
+  private final AnalogEncoder encoder;
+  private final double offset;
 
-  private PIDController steerPIDController;
-  private double steerP = 0;
-  private double steerI = 0;
-  private double steerD = 0;
+  private final TalonFXConfiguration driveConfig;
+  private final SparkMaxConfig steerConfig;
+
+  private final PIDController steerPIDController;
 
   // odometry stuff, need change later
-  private double wheelRadius = 2;
-  private double gearRatio = 3 / 1;
-  private double encoderResolution = 400;
+  private final double wheelRadius = 2;
+  private final double gearRatio = 3 / 1;
+  private final double encoderResolution = 400;
 
   private double driveVelocity; // meters per second
   private Rotation2d steerAngle;
@@ -52,7 +50,7 @@ public class ModuleIO extends SubsystemBase {
     steerMotor.configure(
         steerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-    steerPIDController = new PIDController(steerP, steerI, steerD);
+    steerPIDController = new PIDController(0.1, 0, 0);
     steerPIDController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
