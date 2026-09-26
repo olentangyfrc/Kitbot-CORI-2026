@@ -63,10 +63,10 @@ public class Drive extends SubsystemBase {
     backRightLocation = new Translation2d(-robotWidth / 2, -robotLength / 2);
 
     // change encoder id, calculate offsets
-    frontLeftModule = new ModuleIO(10, 11, 0, 0.0);
-    frontRightModule = new ModuleIO(12, 13, 1, 0.0);
-    backLeftModule = new ModuleIO(14, 15, 2, 0.0);
-    backRightModule = new ModuleIO(16, 17, 3, 0.0);
+    frontLeftModule = new ModuleIO(31, 13, 0, 0.0);
+    frontRightModule = new ModuleIO(30, 44, 1, 0.0);
+    backLeftModule = new ModuleIO(33, 11, 2, 0.0);
+    backRightModule = new ModuleIO(40, 21, 3, 0.0);
 
     kinematics = new SwerveDriveKinematics(getModuleTranslations());
 
