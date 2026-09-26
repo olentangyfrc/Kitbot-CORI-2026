@@ -1,9 +1,13 @@
 package frc.robot.subsystems.shooter;
 
+// import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -18,7 +22,7 @@ public class Shooter extends SubsystemBase {
   private final double shooterVelocityTolerance = 25;
 
   private TalonFXConfiguration shooterConfig;
-  private TalonFXConfiguration indexerConfig;
+  private SparkMaxConfig indexerConfig;
 
   private final int shooterCanId = 40; // change later
   private TalonFX shooterMotor;
@@ -28,22 +32,18 @@ public class Shooter extends SubsystemBase {
 
   public Shooter() {
     shooterMotor = new TalonFX(shooterCanId, "rio");
-    indexerMotor =
-        new SparkMax(indexerCanId, com.revrobotics.spark.SparkLowLevel.MotorType.kBrushless);
+    indexerMotor = new SparkMax(indexerCanId, MotorType.kBrushless);
     init();
   }
 
   public void init() {
     shooterConfig = new TalonFXConfiguration();
     shooterConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-    shooterConfig.Slot0 = new com.ctre.phoenix6.configs.Slot0Configs();
-    shooterConfig.Slot0.kP = 0;
-    shooterConfig.Slot0.kI = 0;
-    shooterConfig.Slot0.kD = 0;
-    shooterConfig.Slot0.kS = 0;
-    shooterConfig.Slot0.kV = 0;
-    shooterConfig.Slot0.kA = 0;
     shooterMotor.getConfigurator().apply(shooterConfig, 0.25);
+
+    indexerConfig = new SparkMaxConfig();
+    indexerConfig.idleMode(IdleMode.kBrake);
+    indexerConfig.inverted(false); // test this
   }
   /**
    * Sets shooter motor speed in RPS.
@@ -65,21 +65,20 @@ public class Shooter extends SubsystemBase {
   public void stopIndexer() {
     indexerMotor.setVoltage(0);
   }
-  /** Cuts power to indexer motor and lets it freely rotate. */
   /** Cuts power to shooter motor and lets it freely rotate. */
   public void stopShooter() {
     shooterMotor.setControl(new com.ctre.phoenix6.controls.VoltageOut(0.0));
   }
   /** Cuts power to shooter and indexer motor. */
   public void stop() {
-    shooterMotor.setControl(new com.ctre.phoenix6.controls.VoltageOut(0.0));
-    indexerMotor.setVoltage(0.0);
+    stopShooter();
+    stopIndexer();
   }
   /** Runs shooter and indexer motor so fuel is ejected out of intake. */
-  // public void eject() {
-  //   setShooterSpeed(-intakeMaxVelocity);
-  //   setIndexerSpeed(-indexerMaxVelocity);
-  // }
+  public void eject() {
+    setShooterSpeed(-intakeMaxVelocity);
+    setIndexerSpeed(-indexerMaxVelocity);
+  }
 
   // public void shoot() {
   //   setShooterSpeed(shootMaxVelocity);

@@ -2,6 +2,7 @@ package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.shooter.Shooter;
 
 public class ShooterCommands {
@@ -32,22 +33,22 @@ public class ShooterCommands {
         shooter);
   }
 
-  // public static Command shoot(Shooter shooter, Drive drive) {
-  //   return Commands.run(
-  //       () -> {
-  //         double distance = drive.getDistanceFromVirtualHub();
-  //         shooter.shootForHub(distance);
+  public static Command shoot(Shooter shooter, Drive drive) {
+    return Commands.run(
+        () -> {
+          double distance = drive.getDistanceFromVirtualHub();
+          shooter.shootForHub(distance);
 
-  //         if (shooter.isShooterAtSpeed()
-  //             && drive.isRobotFacingVirtualHub()
-  //             && drive.canShootAtVirtualHub()) {
-  //           shooter.indexerShoot();
-  //         } else {
-  //           shooter.holdIndexer();
-  //         }
-  //       },
-  //       shooter);
-
+          if (shooter.isShooterAtSpeed()
+              && drive.isRobotFacingVirtualHub()
+              && drive.canShootAtVirtualHub()) {
+            shooter.indexerShoot();
+          } else {
+            shooter.stopIndexer();
+          }
+        },
+        shooter);
+  }
   // public static Command spinUp(Shooter shooter) {
   //   return Commands.run(
   //       () -> {
@@ -64,11 +65,11 @@ public class ShooterCommands {
         shooter);
   }
 
-  // public static Command eject(Shooter shooter) {
-  //   return Commands.run(
-  //       () -> {
-  //         shooter.eject();
-  //       },
-  //       shooter);
-  // }
+  public static Command eject(Shooter shooter) {
+    return Commands.run(
+        () -> {
+          shooter.eject();
+        },
+        shooter);
+  }
 }
