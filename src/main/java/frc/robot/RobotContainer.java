@@ -11,7 +11,9 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.commands.DriveCommands;
 import frc.robot.commands.ShooterCommands;
+import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.shooter.Shooter;
 
 // import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -26,6 +28,7 @@ public class RobotContainer {
   // Subsystems
   // private final Drive drive;
   private final Shooter shooter;
+  private final Drive drive;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -38,20 +41,20 @@ public class RobotContainer {
     switch (Constants.currentMode) {
       case REAL:
         // Real robot, instantiate hardware IO implementations
-        // drive = new Drive();
+        drive = new Drive();
         shooter = new Shooter();
         break;
 
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
-        // drive = new Drive();
+        drive = new Drive();
         shooter = new Shooter();
 
         break;
 
       default:
         // Replayed robot, disable IO implementations
-        // drive = new Drive();
+        drive = new Drive();
         shooter = new Shooter();
 
         break;
@@ -73,11 +76,16 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
     // Default command, normal field-relative drive
-    /**
-     * drive.setDefaultCommand( DriveCommands.joystickDrive( drive, () -> -controller.getLeftY(), ()
-     * -> -controller.getLeftX(), // temporary fix for some random bug () ->
-     * -controller.getRawAxis(2) // () -> -controller.getRightX() ));
-     */
+
+    drive.setDefaultCommand(
+        DriveCommands.joystickDrive(
+            drive,
+            () -> -controller.getLeftY(),
+            () -> -controller.getLeftX(),
+            // temporary fix for some random bug
+            () -> -controller.getRawAxis(2)));
+    //  () -> -controller.getRightX() ));
+
     shooter.setDefaultCommand(ShooterCommands.stop(shooter));
     // Snake command, front is always forwards
     /**

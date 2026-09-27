@@ -32,11 +32,11 @@ public class ModuleIO extends SubsystemBase {
   private final double gearRatio = 1 / 8.33; // taken from agnes
   private final double encoderResolution = 42; // also agnes
 
-  private double driveVelocity; // meters per second
-  private Rotation2d steerAngle;
+  private double driveVelocity = 0; // meters per second
+  private Rotation2d steerAngle = new Rotation2d();
 
   public ModuleIO(int driveMotorCanId, int steerMotorCanId, int encoderId, double motorOffset) {
-    driveMotor = new TalonFX(driveMotorCanId, "can0");
+    driveMotor = new TalonFX(driveMotorCanId, "rio");
     steerMotor = new SparkMax(steerMotorCanId, MotorType.kBrushless);
     encoder = new AnalogEncoder(encoderId, 2 * Math.PI, 0);
     offset = motorOffset;
@@ -50,7 +50,7 @@ public class ModuleIO extends SubsystemBase {
     steerMotor.configure(
         steerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-    steerPIDController = new PIDController(0.1, 0, 0);
+    steerPIDController = new PIDController(2, 0, 0);
     steerPIDController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
@@ -68,11 +68,12 @@ public class ModuleIO extends SubsystemBase {
     double driveOutput = state.speedMetersPerSecond;
 
     driveMotor.setVoltage(driveOutput);
+    steerOutput = 2;
     steerMotor.setVoltage(steerOutput);
   }
 
   public double getEncoderRadians() {
-    return encoder.get() + offset;
+    return encoder.get() - Math.PI + offset;
   }
   /**
    * Gets the current position of the swerve module. Mostly used for odometry
