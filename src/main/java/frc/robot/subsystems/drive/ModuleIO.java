@@ -50,7 +50,7 @@ public class ModuleIO extends SubsystemBase {
     steerMotor.configure(
         steerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-    steerPIDController = new PIDController(2, 0, 0);
+    steerPIDController = new PIDController(0.2, 0, 0);
     steerPIDController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
@@ -68,7 +68,6 @@ public class ModuleIO extends SubsystemBase {
     double driveOutput = state.speedMetersPerSecond;
 
     driveMotor.setVoltage(driveOutput);
-    steerOutput = 2;
     steerMotor.setVoltage(steerOutput);
   }
 
