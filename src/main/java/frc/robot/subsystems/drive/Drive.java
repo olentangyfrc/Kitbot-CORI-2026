@@ -54,7 +54,7 @@ public class Drive extends SubsystemBase {
   private final FieldObject2d virtualHub = field.getObject("virtualHub");
   private SwerveDrivePoseEstimator poseEstimator;
 
-  private final double angleTolerance = 3;
+  private final double angleTolerance = 10; // degrees
 
   public Drive() {
     frontLeftLocation = new Translation2d(robotWidth / 2, robotLength / 2);
@@ -315,12 +315,12 @@ public class Drive extends SubsystemBase {
    */
   public boolean isRobotFacingHub(Translation2d position) {
 
-    double currentAngle = getPose().getRotation().getRadians() + Math.PI;
+    double currentAngle = getPose().getRotation().getRadians();
     double targetAngle = getRotationToHub(position).getRadians();
     double delta = targetAngle - currentAngle;
     delta = ((delta + Math.PI) % (2 * Math.PI) + (2 * Math.PI)) % (2 * Math.PI) - Math.PI;
 
-    return (Math.abs(delta) > angleTolerance);
+    return (Math.abs(delta) < Math.toRadians(angleTolerance));
   }
   /**
    * Sees if the robot is facing the Virtual Hub, with a tolerance.
@@ -332,15 +332,16 @@ public class Drive extends SubsystemBase {
   }
   /** Sees if the robot is within distance to shoot at the Hub. */
   public boolean canShootAtHub() {
-    return (getDistanceFromHub() < 2 && getDistanceFromHub() > 4);
+    return canShootAtHub(getHubPosition(), 2, 5);
   }
   /** Sees if the robot is within distance to shoot at a Pose2d. */
   public boolean canShootAtHub(Translation2d position, double min, double max) {
-    return (getDistanceFromHub(position) > min && getDistanceFromHub(position) < max);
+    return (Math.abs(getDistanceFromHub(position)) > min
+        && Math.abs(getDistanceFromHub(position)) < max);
   }
   /** Sees if the robot is within distance to shoot at the Virtual Hub. */
   public boolean canShootAtVirtualHub() {
-    return (getDistanceFromVirtualHub() > 2 && getDistanceFromVirtualHub() < 4);
+    return canShootAtHub(getVirtualHubPosition(), 2, 5);
   }
 
   public void periodic() {
@@ -349,8 +350,6 @@ public class Drive extends SubsystemBase {
         getVirtualHubPosition().getX(), getVirtualHubPosition().getY(), new Rotation2d());
 
     SmartDashboard.putData("poseField", field);
-    SmartDashboard.putNumber("virtualHubX", getVirtualHubPosition().getX());
-    SmartDashboard.putNumber("virtualHubY", getVirtualHubPosition().getY());
 
     SmartDashboard.putBoolean("IsRobotFacingVirtualHub", isRobotFacingVirtualHub());
     SmartDashboard.putBoolean("canShootAtVirtualHub", canShootAtVirtualHub());

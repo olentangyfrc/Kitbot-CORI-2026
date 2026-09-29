@@ -76,44 +76,42 @@ public class RobotContainer {
    */
   private void configureButtonBindings() {
     // Default command, normal field-relative drive
-
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
             () -> -controller.getLeftY(),
             () -> -controller.getLeftX(),
-            // temporary fix for some random bug
-            () -> -controller.getRawAxis(2)));
-    //  () -> -controller.getRightX() ));
+            () -> -controller.getRawAxis(2) // temporary fix for some random bug
+            ));
 
     shooter.setDefaultCommand(ShooterCommands.stop(shooter));
     // Snake command, front is always forwards
-    /**
-     * controller .a() .whileTrue( DriveCommands.joystickDriveSnake( drive, () ->
-     * -controller.getLeftY(), () -> -controller.getLeftX()));
-     */
+    controller
+        .a()
+        .whileTrue(
+            DriveCommands.joystickDriveSnake(
+                drive,
+                () -> -controller.getLeftY(),
+                () -> -controller.getLeftX(),
+                () -> -controller.getRawAxis(2) // temporary fix for some random bug
+                ));
+    // Shoot towards a virtual target when moving to score correctly.
+    controller
+        .rightTrigger(0.35)
+        .whileTrue(
+            DriveCommands.shootOnTheMove(
+                drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
     // unused point to hub code, shoot on move is better
     // controller
     //     .x()
     //     .whileTrue(
     //         DriveCommands.pointToHub(
-    //             drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
-    /*controller
-    .rightTrigger(0.35)
-    .whileTrue(
-        DriveCommands.shootOnTheMove(
-            drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
-            */
+    //             drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()))
 
-    // point to hub
-    // spin up shooter
-    // wait for shooter to get up to speed
-    // run indexers
     // controller.rightTrigger(0.35).whileTrue(ShooterCommands.spinUp(shooter));
-    controller.rightTrigger(0.35).whileFalse(ShooterCommands.stop(shooter));
 
-    controller.leftTrigger().whileTrue(ShooterCommands.intake(shooter));
-    controller.a().whileTrue(ShooterCommands.stop(shooter));
+    controller.x().whileTrue(ShooterCommands.intake(shooter));
+    controller.rightTrigger(0.35).whileTrue(ShooterCommands.shoot(shooter, drive));
 
     // controller.b().whileTrue(ShooterCommands.eject(shooter));
 

@@ -34,25 +34,32 @@ public class DriveCommands {
         drive);
   }
 
-  public static Command joystickDriveSnake(Drive drive, DoubleSupplier x, DoubleSupplier y) {
-    PIDController angleController = new PIDController(6, 0, 0);
+  public static Command joystickDriveSnake(
+      Drive drive, DoubleSupplier x, DoubleSupplier y, DoubleSupplier omega) {
+    PIDController angleController = new PIDController(8, 0, 0);
     angleController.enableContinuousInput(-Math.PI, Math.PI);
     return Commands.run(
             () -> {
-              double xspeed = MathUtil.applyDeadband(x.getAsDouble(), DEADBAND);
-              double yspeed = MathUtil.applyDeadband(y.getAsDouble(), DEADBAND);
+              double xSpeed = MathUtil.applyDeadband(x.getAsDouble(), DEADBAND);
+              double ySpeed = MathUtil.applyDeadband(y.getAsDouble(), DEADBAND);
+              double omegaSpeed = MathUtil.applyDeadband(omega.getAsDouble(), DEADBAND);
 
-              if (Math.hypot(xspeed, yspeed) > DEADBAND) {
-                snakeAngle = Math.atan2(yspeed, xspeed);
+              if (Math.hypot(xSpeed, ySpeed) > DEADBAND) {
+                snakeAngle = Math.atan2(ySpeed, xSpeed);
               }
 
-              xspeed = Math.copySign(xspeed * xspeed, xspeed) * 3;
-              yspeed = Math.copySign(yspeed * yspeed, yspeed) * 3;
+              xSpeed = Math.copySign(xSpeed * xSpeed, xSpeed) * 3;
+              ySpeed = Math.copySign(ySpeed * ySpeed, ySpeed) * 3;
+              omegaSpeed = Math.copySign(omegaSpeed * omegaSpeed, omegaSpeed) * 6;
 
-              double omegaspeed =
+              double snakeOmegaSpeed =
                   angleController.calculate(drive.getRotation().getRadians(), snakeAngle);
 
-              ChassisSpeeds chassisSpeeds = new ChassisSpeeds(xspeed, yspeed, omegaspeed);
+              if (omegaSpeed != 0) {
+                snakeOmegaSpeed = omegaSpeed;
+              }
+
+              ChassisSpeeds chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, snakeOmegaSpeed);
               drive.drive(chassisSpeeds);
             },
             drive)
@@ -66,7 +73,7 @@ public class DriveCommands {
   public static Command joystickDriveWithAngle(
       Drive drive, DoubleSupplier x, DoubleSupplier y, Supplier<Rotation2d> rotation) {
 
-    PIDController angleController = new PIDController(6, 0, 0);
+    PIDController angleController = new PIDController(8, 0, 0);
     angleController.enableContinuousInput(-Math.PI, Math.PI);
     return Commands.run(
             () -> {
