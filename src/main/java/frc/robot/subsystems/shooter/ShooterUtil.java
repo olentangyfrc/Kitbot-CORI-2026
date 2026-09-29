@@ -11,9 +11,12 @@ public class ShooterUtil {
     // need to tune
     // distance (meters), rpm
     double[][] highCeilingData = {
-      {0, 500},
-      {1, 1000},
-      {2, 1500}
+      {0, 0},
+      {1, 500},
+      {2, 750},
+      {3, 1250},
+      {4, 2000},
+      {5, 3000},
     };
 
     for (double[] point : highCeilingData) {
