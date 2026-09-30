@@ -24,6 +24,8 @@ public class Drive extends SubsystemBase {
   private final double robotWidth = 0.8128;
   private final double robotLength = 0.5842;
 
+  private final double maxSpeed = Constants.maxLinearSpeed; // mps
+
   private Pigeon2 gyro;
 
   private SwerveDriveKinematics kinematics;
@@ -111,7 +113,7 @@ public class Drive extends SubsystemBase {
     switch (Constants.currentMode) {
       case REAL:
         SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds);
-        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, 1);
+        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, maxSpeed);
 
         frontLeftModule.setState(moduleStates[0]);
         frontRightModule.setState(moduleStates[1]);

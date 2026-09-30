@@ -28,14 +28,13 @@ public class ModuleIO extends SubsystemBase {
 
   private final TalonFXConfiguration driveConfig;
   private final SparkMaxConfig steerConfig;
-
   private final PIDController steerPIDController;
 
   // odometry stuff, need change later
   private double steerP = 0.3;
-  private final double wheelRadius = 1.8125; // inches? i think
-  private final double gearRatio = 1 / 8.33; // taken from agnes
-  private final double encoderResolution = 42; // also agnes
+  private final double wheelRadius = Units.inchesToMeters(1.8125); // inches
+  private final double wheelCircumference = 2 * Math.PI * wheelRadius;
+  private final double gearRatio = 1 / 8.14; // maybe 8.33
 
   private double driveVelocity = 0; // meters per second
   private Rotation2d steerAngle = new Rotation2d();
@@ -72,17 +71,16 @@ public class ModuleIO extends SubsystemBase {
     driveVelocity = state.speedMetersPerSecond;
     steerAngle = state.angle;
 
-    double steerOutput = 0;
-
-    steerOutput = steerPIDController.calculate(getEncoderRadians(), state.angle.getRadians());
+    double steerOutput =
+        steerPIDController.calculate(getEncoderRadians(), state.angle.getRadians());
 
     if (swerveTuningMode) {
       steerOutput = steerTuningOutput;
     }
 
-    double driveOutput = state.speedMetersPerSecond;
+    double driveOutput = (state.speedMetersPerSecond / wheelCircumference) * gearRatio;
 
-    driveMotor.setVoltage(driveOutput);
+    driveMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(driveOutput));
     steerMotor.setVoltage(steerOutput);
   }
 
@@ -96,7 +94,7 @@ public class ModuleIO extends SubsystemBase {
    */
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(
-        (driveMotor.getPosition().getValueAsDouble() * gearRatio * Units.inchesToMeters(wheelRadius) * Math.PI * 2),
+        (driveMotor.getPosition().getValueAsDouble() * gearRatio * wheelCircumference),
         Rotation2d.fromRadians(getEncoderRadians()));
   }
   /**
@@ -119,8 +117,8 @@ public class ModuleIO extends SubsystemBase {
           "steerMotorId" + steerMotor.getDeviceId(), getPosition().angle.getDegrees());
 
       steerTuningOutput =
-          SmartDashboard.getNumber("steerTuningOutput" + steerMotor.getDeviceId(),
-      steerTuningOutput);
+          SmartDashboard.getNumber(
+              "steerTuningOutput" + steerMotor.getDeviceId(), steerTuningOutput);
     }
   }
 }
