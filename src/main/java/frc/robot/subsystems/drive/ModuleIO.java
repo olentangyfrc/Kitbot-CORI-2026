@@ -13,6 +13,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -54,8 +55,12 @@ public class ModuleIO extends SubsystemBase {
     steerMotor.configure(
         steerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-    steerPIDController = new PIDController(0.5, 0, 0);
+    steerPIDController = new PIDController(steerP, 0, 0);
     steerPIDController.enableContinuousInput(-Math.PI, Math.PI);
+
+    SmartDashboard.putBoolean("swerveTuningMode", swerveTuningMode);
+    SmartDashboard.putNumber("steerP", steerP);
+    SmartDashboard.putNumber("steerTuningOutput" + steerMotor.getDeviceId(), steerTuningOutput);
   }
 
   public void setState(SwerveModuleState state) {
@@ -71,9 +76,9 @@ public class ModuleIO extends SubsystemBase {
 
     steerOutput = steerPIDController.calculate(getEncoderRadians(), state.angle.getRadians());
 
-    // if (swerveTuningMode) {
-    // steerOutput = steerTuningOutput;
-    // }
+    if (swerveTuningMode) {
+      steerOutput = steerTuningOutput;
+    }
 
     double driveOutput = state.speedMetersPerSecond;
 
@@ -91,8 +96,7 @@ public class ModuleIO extends SubsystemBase {
    */
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(
-        (driveMotor.getPosition().getValueAsDouble() * gearRatio * wheelRadius * Math.PI * 2)
-            / encoderResolution,
+        (driveMotor.getPosition().getValueAsDouble() * gearRatio * Units.inchesToMeters(wheelRadius) * Math.PI * 2),
         Rotation2d.fromRadians(getEncoderRadians()));
   }
   /**
@@ -105,21 +109,18 @@ public class ModuleIO extends SubsystemBase {
   }
 
   public void periodic() {
-    // SmartDashboard.putBoolean("swerveTuningMode", swerveTuningMode);
-    // swerveTuningMode = SmartDashboard.getBoolean("swerveTuningMode", swerveTuningMode);
+    swerveTuningMode = SmartDashboard.getBoolean("swerveTuningMode", swerveTuningMode);
 
-    // if (swerveTuningMode) {
-    SmartDashboard.putNumber("steerP", steerP);
-    steerP = SmartDashboard.getNumber("steerP", steerP);
-    steerPIDController.setP(steerP);
+    if (swerveTuningMode) {
+      steerP = SmartDashboard.getNumber("steerP", steerP);
+      steerPIDController.setP(steerP);
 
-    SmartDashboard.putNumber(
-        "steerMotorId" + steerMotor.getDeviceId(), getPosition().angle.getDegrees());
+      SmartDashboard.putNumber(
+          "steerMotorId" + steerMotor.getDeviceId(), getPosition().angle.getDegrees());
 
-    // SmartDashboard.putNumber("steerTuningOutput" + steerMotor.getDeviceId(), steerTuningOutput);
-    // steerTuningOutput =
-    //     SmartDashboard.getNumber("steerTuningOutput" + steerMotor.getDeviceId(),
-    // steerTuningOutput);
-    // }
+      steerTuningOutput =
+          SmartDashboard.getNumber("steerTuningOutput" + steerMotor.getDeviceId(),
+      steerTuningOutput);
+    }
   }
 }
