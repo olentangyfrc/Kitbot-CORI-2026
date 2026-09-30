@@ -14,13 +14,16 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogEncoder;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ModuleIO extends SubsystemBase {
   private final TalonFX driveMotor;
   private final SparkMax steerMotor;
   private final AnalogEncoder encoder;
-  private final double offset; // radians
+  private final double offset; // degrees
+  private boolean swerveTuningMode = false;
+  private double steerTuningOutput = 0; // degrees
 
   private final TalonFXConfiguration driveConfig;
   private final SparkMaxConfig steerConfig;
@@ -28,6 +31,7 @@ public class ModuleIO extends SubsystemBase {
   private final PIDController steerPIDController;
 
   // odometry stuff, need change later
+  private double steerP = 0.3;
   private final double wheelRadius = 1.8125; // inches? i think
   private final double gearRatio = 1 / 8.33; // taken from agnes
   private final double encoderResolution = 42; // also agnes
@@ -50,7 +54,7 @@ public class ModuleIO extends SubsystemBase {
     steerMotor.configure(
         steerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
-    steerPIDController = new PIDController(0.2, 0, 0);
+    steerPIDController = new PIDController(0.5, 0, 0);
     steerPIDController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
@@ -63,8 +67,14 @@ public class ModuleIO extends SubsystemBase {
     driveVelocity = state.speedMetersPerSecond;
     steerAngle = state.angle;
 
-    double steerOutput =
-        steerPIDController.calculate(getEncoderRadians(), state.angle.getRadians());
+    double steerOutput = 0;
+
+    steerOutput = steerPIDController.calculate(getEncoderRadians(), state.angle.getRadians());
+
+    // if (swerveTuningMode) {
+    // steerOutput = steerTuningOutput;
+    // }
+
     double driveOutput = state.speedMetersPerSecond;
 
     driveMotor.setVoltage(driveOutput);
@@ -72,7 +82,7 @@ public class ModuleIO extends SubsystemBase {
   }
 
   public double getEncoderRadians() {
-    return encoder.get() - Math.PI + offset;
+    return encoder.get() - Math.PI + Math.toRadians(offset);
   }
   /**
    * Gets the current position of the swerve module. Mostly used for odometry
@@ -92,5 +102,24 @@ public class ModuleIO extends SubsystemBase {
    */
   public SwerveModuleState getState() {
     return new SwerveModuleState(driveVelocity, steerAngle);
+  }
+
+  public void periodic() {
+    // SmartDashboard.putBoolean("swerveTuningMode", swerveTuningMode);
+    // swerveTuningMode = SmartDashboard.getBoolean("swerveTuningMode", swerveTuningMode);
+
+    // if (swerveTuningMode) {
+    SmartDashboard.putNumber("steerP", steerP);
+    steerP = SmartDashboard.getNumber("steerP", steerP);
+    steerPIDController.setP(steerP);
+
+    SmartDashboard.putNumber(
+        "steerMotorId" + steerMotor.getDeviceId(), getPosition().angle.getDegrees());
+
+    // SmartDashboard.putNumber("steerTuningOutput" + steerMotor.getDeviceId(), steerTuningOutput);
+    // steerTuningOutput =
+    //     SmartDashboard.getNumber("steerTuningOutput" + steerMotor.getDeviceId(),
+    // steerTuningOutput);
+    // }
   }
 }
