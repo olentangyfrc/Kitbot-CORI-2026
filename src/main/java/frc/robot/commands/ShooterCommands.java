@@ -39,9 +39,8 @@ public class ShooterCommands {
           double distance = drive.getDistanceFromVirtualHub();
           shooter.shootForHub(distance);
 
-          if (shooter.isShooterAtSpeed()
-              && drive.isRobotFacingVirtualHub()
-              && drive.canShootAtVirtualHub()) {
+          if (shooter.isShooterAtSpeed()) { // && drive.isRobotFacingVirtualHub() &&
+            // drive.canShootAtVirtualHub()
             shooter.indexerShoot();
           } else {
             shooter.stopIndexer();

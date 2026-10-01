@@ -17,7 +17,7 @@ import edu.wpi.first.wpilibj.RobotBase;
 public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
-  
+
   public static final double maxLinearSpeed = 3.2; // mps
   public static final double maxRotationalSpeed = 6; // rad per sec
 

@@ -59,16 +59,16 @@ public class Drive extends SubsystemBase {
   private final double angleTolerance = 10; // degrees
 
   public Drive() {
-    frontLeftLocation = new Translation2d(robotWidth / 2, robotLength / 2);
-    frontRightLocation = new Translation2d(robotWidth / 2, -robotLength / 2);
-    backLeftLocation = new Translation2d(-robotWidth / 2, robotLength / 2);
-    backRightLocation = new Translation2d(-robotWidth / 2, -robotLength / 2);
+    frontLeftLocation = new Translation2d(robotWidth / 2, -robotLength / 2);
+    frontRightLocation = new Translation2d(robotWidth / 2, robotLength / 2);
+    backLeftLocation = new Translation2d(-robotWidth / 2, -robotLength / 2);
+    backRightLocation = new Translation2d(-robotWidth / 2, robotLength / 2);
 
     // change encoder id, calculate offsets
-    frontLeftModule = new ModuleIO(31, 11, 0, 0.0);
-    frontRightModule = new ModuleIO(30, 13, 1, 0.0);
-    backLeftModule = new ModuleIO(33, 15, 2, 0.0);
-    backRightModule = new ModuleIO(32, 17, 3, 0.0);
+    frontLeftModule = new ModuleIO(31, 11, 0, -2.5730803146122083 + Math.PI);
+    frontRightModule = new ModuleIO(30, 13, 1, -0.6588291787123399);
+    backLeftModule = new ModuleIO(33, 15, 2, -1.5260830950994393);
+    backRightModule = new ModuleIO(32, 17, 3, -0.8061077985790659);
 
     kinematics = new SwerveDriveKinematics(getModuleTranslations());
 
@@ -87,7 +87,7 @@ public class Drive extends SubsystemBase {
   public Rotation2d getRotation() {
     switch (Constants.currentMode) {
       case REAL:
-        return Rotation2d.fromDegrees(gyro.getYaw().getValueAsDouble());
+        return Rotation2d.fromDegrees(-gyro.getYaw().getValueAsDouble());
       case SIM:
         return robotPose.getRotation();
       default:
@@ -105,9 +105,7 @@ public class Drive extends SubsystemBase {
    * @param fieldSpeeds
    */
   public void drive(ChassisSpeeds fieldSpeeds) {
-    ChassisSpeeds chassisSpeeds =
-        ChassisSpeeds.discretize(
-            ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, getRotation()), 0.02);
+    ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, getRotation());
     this.chassisSpeeds = chassisSpeeds;
 
     switch (Constants.currentMode) {

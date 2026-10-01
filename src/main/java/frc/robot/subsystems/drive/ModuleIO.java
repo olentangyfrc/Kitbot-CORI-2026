@@ -2,6 +2,7 @@ package frc.robot.subsystems.drive;
 
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
@@ -31,7 +32,7 @@ public class ModuleIO extends SubsystemBase {
   private final PIDController steerPIDController;
 
   // odometry stuff, need change later
-  private double steerP = 0.3;
+  private double steerP = 5;
   private final double wheelRadius = Units.inchesToMeters(1.8125); // inches
   private final double wheelCircumference = 2 * Math.PI * wheelRadius;
   private final double gearRatio = 1 / 8.14; // maybe 8.33
@@ -42,15 +43,18 @@ public class ModuleIO extends SubsystemBase {
   public ModuleIO(int driveMotorCanId, int steerMotorCanId, int encoderId, double motorOffset) {
     driveMotor = new TalonFX(driveMotorCanId, "rio");
     steerMotor = new SparkMax(steerMotorCanId, MotorType.kBrushless);
+    // encoder = new AnalogEncoder(encoderId);
     encoder = new AnalogEncoder(encoderId, 2 * Math.PI, 0);
-    offset = motorOffset;
+
+    offset = motorOffset; // radians
 
     driveConfig = new TalonFXConfiguration();
     driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    driveConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     driveMotor.getConfigurator().apply(driveConfig, 0.25);
 
     steerConfig = new SparkMaxConfig();
-    steerConfig.idleMode(IdleMode.kBrake);
+    steerConfig.idleMode(IdleMode.kCoast);
     steerMotor.configure(
         steerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -72,20 +76,22 @@ public class ModuleIO extends SubsystemBase {
     steerAngle = state.angle;
 
     double steerOutput =
-        steerPIDController.calculate(getEncoderRadians(), state.angle.getRadians());
+        -steerPIDController.calculate(getEncoderRadians(), state.angle.getRadians());
 
     if (swerveTuningMode) {
       steerOutput = steerTuningOutput;
     }
+    SmartDashboard.putNumber("swerveSteetOutput" + steerMotor.getDeviceId(), steerOutput);
 
     double driveOutput = (state.speedMetersPerSecond / wheelCircumference) * gearRatio;
 
-    driveMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(driveOutput));
+    // driveMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(driveOutput));
+    driveMotor.setVoltage(driveOutput);
     steerMotor.setVoltage(steerOutput);
   }
 
   public double getEncoderRadians() {
-    return encoder.get() - Math.PI + Math.toRadians(offset);
+    return encoder.get() - Math.PI - offset;
   }
   /**
    * Gets the current position of the swerve module. Mostly used for odometry
@@ -120,5 +126,6 @@ public class ModuleIO extends SubsystemBase {
           SmartDashboard.getNumber(
               "steerTuningOutput" + steerMotor.getDeviceId(), steerTuningOutput);
     }
+    SmartDashboard.putNumber("encoder" + steerMotor.getDeviceId(), getEncoderRadians());
   }
 }

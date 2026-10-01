@@ -80,8 +80,8 @@ public class RobotContainer {
         DriveCommands.joystickDrive(
             drive,
             () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> -controller.getRawAxis(2) // temporary fix for some random bug
+            () -> controller.getLeftX(),
+            () -> controller.getRawAxis(4) // temporary fix for some random bug
             ));
 
     shooter.setDefaultCommand(ShooterCommands.stop(shooter));
@@ -92,15 +92,15 @@ public class RobotContainer {
             DriveCommands.joystickDriveSnake(
                 drive,
                 () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
-                () -> -controller.getRawAxis(2) // temporary fix for some random bug
+                () -> controller.getLeftX(),
+                () -> controller.getRawAxis(4) // temporary fix for some random bug
                 ));
     // Shoot towards a virtual target when moving to score correctly.
-    controller
-        .rightTrigger(0.35)
-        .whileTrue(
-            DriveCommands.shootOnTheMove(
-                drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
+    // controller
+    //     .rightTrigger(0.35)
+    //     .whileTrue(
+    //         DriveCommands.shootOnTheMove(
+    //             drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
     // unused point to hub code, shoot on move is better
     // controller
     //     .x()
