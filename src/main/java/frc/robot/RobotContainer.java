@@ -26,11 +26,13 @@ import frc.robot.subsystems.shooter.Shooter;
  */
 public class RobotContainer {
   // Subsystems
-  private final Drive drive;
+  // private final Drive drive;
   private final Shooter shooter;
+  private final Drive drive;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
+  private final CommandXboxController controller2 = new CommandXboxController(1);
 
   // Dashboard inputs
   // private final LoggedDashboardChooser<Command> autoChooser;
@@ -79,10 +81,8 @@ public class RobotContainer {
         DriveCommands.joystickDrive(
             drive,
             () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            // temporary fix for some random bug
-            () -> -controller.getRawAxis(2)
-            // () -> -controller.getRightX()
+            () -> controller.getLeftX(),
+            () -> controller.getRawAxis(4) // temporary fix for some random bug
             ));
 
     shooter.setDefaultCommand(ShooterCommands.stop(shooter));
@@ -91,31 +91,48 @@ public class RobotContainer {
         .a()
         .whileTrue(
             DriveCommands.joystickDriveSnake(
-                drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
+                drive,
+                () -> -controller.getLeftY(),
+                () -> controller.getLeftX(),
+                () -> controller.getRawAxis(4) // temporary fix for some random bug
+                ));
+    // Shoot towards a virtual target when moving to score correctly.
+    // controller
+    //     .rightTrigger(0.35)
+    //     .whileTrue(
+    //         DriveCommands.shootOnTheMove(
+    //             drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
     // unused point to hub code, shoot on move is better
     // controller
     //     .x()
     //     .whileTrue(
     //         DriveCommands.pointToHub(
-    //             drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
+    //             drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()))
+
+    // controller.rightTrigger(0.35).whileTrue(ShooterCommands.spinUp(shooter));
+
+    controller.leftTrigger().whileTrue(ShooterCommands.intake(shooter));
     controller
         .rightTrigger(0.35)
         .whileTrue(
-            DriveCommands.shootOnTheMove(
-                drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
-
-    // point to hub
-    // spin up shooter
-    // wait for shooter to get up to speed
-    // run indexers
-    controller.rightTrigger(0.35).whileTrue(ShooterCommands.spinUp(shooter));
-    controller.rightTrigger(0.35).whileFalse(ShooterCommands.stop(shooter));
-
-    controller.leftTrigger().whileTrue(ShooterCommands.intake(shooter));
+            ShooterCommands.shoot(
+                shooter,
+                drive,
+                () -> controller2.getLeftTriggerAxis(),
+                () -> controller2.getRightTriggerAxis()));
 
     controller.b().whileTrue(ShooterCommands.eject(shooter));
 
     controller.start().whileTrue(DriveCommands.resetGyro(drive));
+    controller2.start().whileTrue(DriveCommands.resetGyro(drive));
+
+    // controller2.leftTrigger().whileTrue(ShooterCommands.changeManualVelocity(shooter, () ->
+    // controller2.getLeftTriggerAxis()));
+    // controller2.rightTrigger().whileTrue(ShooterCommands.changeManualVelocity(shooter, () ->
+    // controller2.getRightTriggerAxis()));
+
+    controller2.povUp().whileTrue(ShooterCommands.setIndexerVelocity(shooter, -6));
+    controller2.povDown().whileTrue(ShooterCommands.setIndexerVelocity(shooter, 6));
   }
   ;
 

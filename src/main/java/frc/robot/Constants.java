@@ -18,6 +18,9 @@ public final class Constants {
   public static final Mode simMode = Mode.SIM;
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
+  public static final double maxLinearSpeed = 5; // mps
+  public static final double falconMaxSpeed = 6380;
+
   public static enum Mode {
     /** Running on a real robot. */
     REAL,
@@ -27,5 +30,21 @@ public final class Constants {
 
     /** Replaying from a log file. */
     REPLAY
+
+    /**
+     * Kitbot CAN IDs:
+     *
+     * <p>Front Left Drive: 31 Front Left Steer: 13
+     *
+     * <p>Front Right Drive: 30 Front Right Steer: 44
+     *
+     * <p>Back Left Drive: 33 Back Left Steer: 11
+     *
+     * <p>Back Right Drive: 32 Back Right Steer: 10
+     *
+     * <p>Intake/Shooter: 40 Feeder/Indexer: 21
+     *
+     * <p>PDP: 1 IMU: 5
+     */
   }
 }
