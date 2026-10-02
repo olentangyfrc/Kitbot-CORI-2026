@@ -3,6 +3,7 @@ package frc.robot.subsystems.shooter;
 // import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.revrobotics.PersistMode;
 import com.revrobotics.ResetMode;
@@ -18,12 +19,12 @@ public class Shooter extends SubsystemBase {
   // tune
   // all in rpm
   private final double spinUpVelocity = 1500;
-  private final double shootMaxVelocity = -3000;
-  private final double intakeMaxVelocity = 1000;
-  private final double indexerMaxVelocity = 4;
+  private final double shootMaxVelocity = 3000;
+  private final double intakeMaxVelocity = 2000;
+  private final double indexerMaxVelocity = 6;
   private final double shooterVelocityTolerance = 120;
-
-  private double previousPosition = 0;
+  private double targetVelocity = 0;
+  private double shooterManualVelocity = 3000;
 
   private ShooterUtil.ShooterParameters shooterParams = new ShooterUtil.ShooterParameters(0);
 
@@ -45,6 +46,7 @@ public class Shooter extends SubsystemBase {
   public void init() {
     shooterConfig = new TalonFXConfiguration();
     shooterConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+    shooterConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     // tune
     shooterConfig.Slot0 = new com.ctre.phoenix6.configs.Slot0Configs();
     shooterConfig.Slot0.kP = 0.15711;
@@ -68,7 +70,7 @@ public class Shooter extends SubsystemBase {
    * @param speed
    */
   public void setShooterSpeed(double speed) {
-    shooterMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(speed / 60));
+    targetVelocity = speed;
   }
   /**
    * Sets indexer motor speed in RPM.
@@ -88,6 +90,7 @@ public class Shooter extends SubsystemBase {
   }
   /** Cuts power to shooter motor and lets it freely rotate. */
   public void stopShooter() {
+    targetVelocity = 0;
     shooterMotor.setControl(new com.ctre.phoenix6.controls.VoltageOut(0.0));
   }
   /** Cuts power to shooter and indexer motor. */
@@ -101,9 +104,9 @@ public class Shooter extends SubsystemBase {
     setIndexerSpeed(-indexerMaxVelocity);
   }
 
-  // public void shoot() {
-  //   setShooterSpeed(shootMaxVelocity);
-  // }
+  public void shoot(Double speed) {
+    setShooterSpeed(speed);
+  }
 
   /**
    * Sets shooter speed to correct value based off distance. Uses an interpolation table to
@@ -152,11 +155,22 @@ public class Shooter extends SubsystemBase {
    * @return Shooter target speed in RPM.
    */
   public double getShooterTargetSpeed() {
-    return shooterParams.shooterRpm();
+    return targetVelocity;
+  }
+
+  public void setShooterManualSpeed(double speed) {
+    shooterManualVelocity = speed;
+  }
+
+  public double getShooterManualSpeed() {
+    return shooterManualVelocity;
   }
 
   public void periodic() {
     SmartDashboard.putNumber("shooterRps", getShooterSpeed());
     SmartDashboard.putNumber("shooterTargetRps", getShooterTargetSpeed());
+    if (targetVelocity > 0) {
+      shooterMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(targetVelocity / 60));
+    }
   }
 }

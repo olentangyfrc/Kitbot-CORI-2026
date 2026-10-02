@@ -18,6 +18,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 
 public class ModuleIO extends SubsystemBase {
   private final TalonFX driveMotor;
@@ -49,7 +50,13 @@ public class ModuleIO extends SubsystemBase {
     offset = motorOffset; // radians
 
     driveConfig = new TalonFXConfiguration();
-    driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+    driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+    driveConfig.Slot0.kS = 0.005755075;
+    driveConfig.Slot0.kV = 0.10939;
+    driveConfig.Slot0.kA = 0.0027408;
+    driveConfig.Slot0.kP = 0.047423;
+    driveConfig.Slot0.kI = 0.0;
+    driveConfig.Slot0.kD = 0.0;
     driveConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
     driveMotor.getConfigurator().apply(driveConfig, 0.25);
 
@@ -83,10 +90,12 @@ public class ModuleIO extends SubsystemBase {
     }
     SmartDashboard.putNumber("swerveSteetOutput" + steerMotor.getDeviceId(), steerOutput);
 
-    double driveOutput = (state.speedMetersPerSecond / wheelCircumference) * gearRatio;
+    // double driveOutput = (state.speedMetersPerSecond / wheelCircumference) * gearRatio;
+    double driveOutput =
+        (state.speedMetersPerSecond * Constants.falconMaxSpeed) / Constants.maxLinearSpeed;
 
-    // driveMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(driveOutput));
-    driveMotor.setVoltage(driveOutput);
+    driveMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(driveOutput / 60));
+    // driveMotor.setVoltage(driveOutput / 60);
     steerMotor.setVoltage(steerOutput);
   }
 

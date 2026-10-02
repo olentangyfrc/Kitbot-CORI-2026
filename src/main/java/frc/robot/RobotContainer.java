@@ -32,6 +32,7 @@ public class RobotContainer {
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
+  private final CommandXboxController controller2 = new CommandXboxController(1);
 
   // Dashboard inputs
   // private final LoggedDashboardChooser<Command> autoChooser;
@@ -110,12 +111,28 @@ public class RobotContainer {
 
     // controller.rightTrigger(0.35).whileTrue(ShooterCommands.spinUp(shooter));
 
-    controller.x().whileTrue(ShooterCommands.intake(shooter));
-    controller.rightTrigger(0.35).whileTrue(ShooterCommands.shoot(shooter, drive));
+    controller.leftTrigger().whileTrue(ShooterCommands.intake(shooter));
+    controller
+        .rightTrigger(0.35)
+        .whileTrue(
+            ShooterCommands.shoot(
+                shooter,
+                drive,
+                () -> controller2.getLeftTriggerAxis(),
+                () -> controller2.getRightTriggerAxis()));
 
-    // controller.b().whileTrue(ShooterCommands.eject(shooter));
+    controller.b().whileTrue(ShooterCommands.eject(shooter));
 
-    // controller.start().whileTrue(DriveCommands.resetGyro(drive));
+    controller.start().whileTrue(DriveCommands.resetGyro(drive));
+    controller2.start().whileTrue(DriveCommands.resetGyro(drive));
+
+    // controller2.leftTrigger().whileTrue(ShooterCommands.changeManualVelocity(shooter, () ->
+    // controller2.getLeftTriggerAxis()));
+    // controller2.rightTrigger().whileTrue(ShooterCommands.changeManualVelocity(shooter, () ->
+    // controller2.getRightTriggerAxis()));
+
+    controller2.povUp().whileTrue(ShooterCommands.setIndexerVelocity(shooter, -6));
+    controller2.povDown().whileTrue(ShooterCommands.setIndexerVelocity(shooter, 6));
   }
   ;
 

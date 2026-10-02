@@ -14,7 +14,6 @@ import java.util.function.Supplier;
 public class DriveCommands {
   public static final double DEADBAND = 0.1;
   public static final double maxLinearSpeed = Constants.maxLinearSpeed; // mps
-  public static final double maxRotationalSpeed = Constants.maxRotationalSpeed; // rad per sec
   public static double snakeAngle = 0;
 
   private DriveCommands() {}
@@ -29,7 +28,7 @@ public class DriveCommands {
 
           xSpeed = Math.copySign(xSpeed * xSpeed, xSpeed) * maxLinearSpeed;
           ySpeed = Math.copySign(ySpeed * ySpeed, ySpeed) * maxLinearSpeed;
-          omegaSpeed = Math.copySign(omegaSpeed * omegaSpeed, omegaSpeed) * maxRotationalSpeed;
+          omegaSpeed = Math.copySign(omegaSpeed * omegaSpeed, omegaSpeed) * maxLinearSpeed;
 
           ChassisSpeeds chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, omegaSpeed);
           drive.drive(chassisSpeeds);
@@ -53,7 +52,7 @@ public class DriveCommands {
 
               xSpeed = Math.copySign(xSpeed * xSpeed, xSpeed) * maxLinearSpeed;
               ySpeed = Math.copySign(ySpeed * ySpeed, ySpeed) * maxLinearSpeed;
-              omegaSpeed = Math.copySign(omegaSpeed * omegaSpeed, omegaSpeed) * maxRotationalSpeed;
+              omegaSpeed = Math.copySign(omegaSpeed * omegaSpeed, omegaSpeed) * maxLinearSpeed;
 
               double snakeOmegaSpeed =
                   angleController.calculate(drive.getRotation().getRadians(), snakeAngle);

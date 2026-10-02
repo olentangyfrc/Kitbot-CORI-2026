@@ -96,6 +96,7 @@ public class Drive extends SubsystemBase {
   }
   /** Resets robot gyro and pose rotation to 0. */
   public void resetGyro() {
+    System.out.println("resetgyro");
     gyro.reset();
     robotPose = new Pose2d(robotPose.getX(), robotPose.getY(), Rotation2d.kZero);
   }
@@ -350,6 +351,7 @@ public class Drive extends SubsystemBase {
         getVirtualHubPosition().getX(), getVirtualHubPosition().getY(), new Rotation2d());
 
     SmartDashboard.putData("poseField", field);
+    SmartDashboard.putNumber("robotGyro", getRotation().getRadians());
 
     SmartDashboard.putBoolean("IsRobotFacingVirtualHub", isRobotFacingVirtualHub());
     SmartDashboard.putBoolean("canShootAtVirtualHub", canShootAtVirtualHub());
