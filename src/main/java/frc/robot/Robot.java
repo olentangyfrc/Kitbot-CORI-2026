@@ -101,7 +101,7 @@ public class Robot extends LoggedRobot {
     SmartDashboard.putNumber("Match Time", DriverStation.getMatchTime());
     SmartDashboard.putNumber("Voltage", RobotController.getBatteryVoltage());
     SmartDashboard.putBoolean("Alliance", isRed);
-    // SmartDashboard.putBoolean("Hub Active", isRed);
+    SmartDashboard.putBoolean("Hub Active", ActiveHub.isAllianceHubActive());
   }
 
   /** This function is called once when the robot is disabled. */
