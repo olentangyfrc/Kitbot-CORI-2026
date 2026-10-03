@@ -4,6 +4,7 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
@@ -12,7 +13,7 @@ import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
 public class DriveCommands {
-  public static final double DEADBAND = 0.1;
+  public static final double DEADBAND = Constants.DEADBAND;
   public static final double maxLinearSpeed = Constants.maxLinearSpeed; // mps
   public static double snakeAngle = 0;
 
@@ -32,6 +33,8 @@ public class DriveCommands {
 
           ChassisSpeeds chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, omegaSpeed);
           drive.drive(chassisSpeeds);
+
+          SmartDashboard.putString("Drivetrain State", "DRIVE");
         },
         drive);
   }
@@ -63,6 +66,8 @@ public class DriveCommands {
 
               ChassisSpeeds chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, snakeOmegaSpeed);
               drive.drive(chassisSpeeds);
+
+              SmartDashboard.putString("Drivetrain State", "SNAKE");
             },
             drive)
         .beforeStarting(
@@ -90,6 +95,8 @@ public class DriveCommands {
 
               ChassisSpeeds chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, omegaSpeed);
               drive.drive(chassisSpeeds);
+
+              SmartDashboard.putString("Drivetrain State", "TO_ANGLE");
             },
             drive)
         .beforeStarting(() -> angleController.reset());
@@ -103,11 +110,28 @@ public class DriveCommands {
     return joystickDriveWithAngle(drive, x, y, () -> drive.getRotationToVirtualHub());
   }
 
+  public static Command stop(Drive drive) {
+    return Commands.run(
+        () -> {
+          drive.stop();
+          SmartDashboard.putString("Drivetrain State", "STOP");
+        },
+        drive);
+  }
+
+  public static Command stopWithX(Drive drive) {
+    return Commands.run(
+        () -> {
+          drive.stopWithX();
+          SmartDashboard.putString("Drivetrain State", "STOP_X");
+        },
+        drive);
+  }
+
   public static Command resetGyro(Drive drive) {
     return Commands.run(
         () -> {
           drive.resetGyro();
-        },
-        drive);
+        });
   }
 }

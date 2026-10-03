@@ -114,25 +114,32 @@ public class RobotContainer {
     controller.leftTrigger().whileTrue(ShooterCommands.intake(shooter));
     controller
         .rightTrigger(0.35)
-        .whileTrue(
-            ShooterCommands.shoot(
-                shooter,
-                drive,
-                () -> controller2.getLeftTriggerAxis(),
-                () -> controller2.getRightTriggerAxis()));
+        .whileTrue(ShooterCommands.shoot(shooter, drive).alongWith(DriveCommands.stopWithX(drive)));
 
     controller.b().whileTrue(ShooterCommands.eject(shooter));
 
     controller.start().whileTrue(DriveCommands.resetGyro(drive));
     controller2.start().whileTrue(DriveCommands.resetGyro(drive));
 
-    // controller2.leftTrigger().whileTrue(ShooterCommands.changeManualVelocity(shooter, () ->
-    // controller2.getLeftTriggerAxis()));
-    // controller2.rightTrigger().whileTrue(ShooterCommands.changeManualVelocity(shooter, () ->
-    // controller2.getRightTriggerAxis()));
+    controller2
+        .leftTrigger()
+        .whileTrue(
+            ShooterCommands.changeManualVelocity(shooter, () -> -controller2.getLeftTriggerAxis()));
+    controller2
+        .rightTrigger()
+        .whileTrue(
+            ShooterCommands.changeManualVelocity(shooter, () -> controller2.getRightTriggerAxis()));
 
-    controller2.povUp().whileTrue(ShooterCommands.setIndexerVelocity(shooter, -6));
-    controller2.povDown().whileTrue(ShooterCommands.setIndexerVelocity(shooter, 6));
+    controller2.x().whileTrue(ShooterCommands.setManualVelocity(shooter, 2000.0));
+    controller2.y().whileTrue(ShooterCommands.setManualVelocity(shooter, 3000.0));
+    controller2.b().whileTrue(ShooterCommands.setManualVelocity(shooter, 3500.0));
+
+    controller2
+        .povUp()
+        .whileTrue(ShooterCommands.setIndexerVelocity(shooter, -Constants.indexerMaxVelocity));
+    controller2
+        .povDown()
+        .whileTrue(ShooterCommands.setIndexerVelocity(shooter, Constants.indexerMaxVelocity));
   }
   ;
 

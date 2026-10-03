@@ -101,7 +101,7 @@ public class Shooter extends SubsystemBase {
   /** Runs shooter and indexer motor so fuel is ejected out of intake. */
   public void eject() {
     setShooterSpeed(-intakeMaxVelocity);
-    setIndexerSpeed(-indexerMaxVelocity);
+    setIndexerSpeed(indexerMaxVelocity);
   }
 
   public void shoot(Double speed) {
@@ -139,7 +139,8 @@ public class Shooter extends SubsystemBase {
    * @return True if shooter speed is within tolerance.
    */
   public boolean isShooterAtSpeed() {
-    return shooterMotor.getClosedLoopError().getValueAsDouble() * 60 <= shooterVelocityTolerance;
+    return (shooterMotor.getClosedLoopError().getValueAsDouble() * 60 <= shooterVelocityTolerance)
+        && getShooterSpeed() > 0;
   }
   /**
    * Gets the current shooter speed.
@@ -167,8 +168,10 @@ public class Shooter extends SubsystemBase {
   }
 
   public void periodic() {
-    SmartDashboard.putNumber("shooterRps", getShooterSpeed());
-    SmartDashboard.putNumber("shooterTargetRps", getShooterTargetSpeed());
+    SmartDashboard.putNumber("Shooter Current RPM", Math.round(getShooterSpeed()));
+    SmartDashboard.putNumber("Shooter Set Target RPM", getShooterTargetSpeed());
+    SmartDashboard.putNumber("Shooter Target RPM", getShooterManualSpeed());
+    SmartDashboard.putBoolean("Is Shooter At Speed", isShooterAtSpeed());
     if (targetVelocity > 0) {
       shooterMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(targetVelocity / 60));
     }

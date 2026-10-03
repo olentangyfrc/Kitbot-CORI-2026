@@ -2,8 +2,10 @@ package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+// import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.shooter.Shooter;
 import java.util.function.DoubleSupplier;
@@ -11,7 +13,7 @@ import java.util.function.DoubleSupplier;
 public class ShooterCommands {
 
   Shooter shooter;
-  private static final double DEADBAND = 0.1;
+  private static final double DEADBAND = Constants.DEADBAND;
 
   // public static Command setShooterVelocity(Shooter shooter, double velocity) {
   //   return Commands.run(
@@ -33,68 +35,59 @@ public class ShooterCommands {
     return Commands.run(
         () -> {
           shooter.stop();
+          SmartDashboard.putString("Shooter State", "STOP");
         },
         shooter);
   }
 
-  public static Command shoot(
-      Shooter shooter, Drive drive, DoubleSupplier negativeRaw, DoubleSupplier positiveRaw) {
+  public static Command shoot(Shooter shooter, Drive drive) {
     return Commands.run(
         () -> {
-          double positive = MathUtil.applyDeadband(positiveRaw.getAsDouble(), DEADBAND) * 2;
-          double negative = MathUtil.applyDeadband(negativeRaw.getAsDouble(), DEADBAND) * 2;
-
-          // double distance = drive.getDistanceFromVirtualHub();
-          // shooterManualVelocity = MathUtil.clamp(shooterManualVelocity - negative.getAsDouble() +
-          // positive.getAsDouble(), 500, 4000);
-          shooter.setShooterManualSpeed(
-              MathUtil.clamp(shooter.getShooterManualSpeed() + positive - negative, 500, 4000));
-
           shooter.shoot(shooter.getShooterManualSpeed());
-          SmartDashboard.putNumber("shooterManualVelocity", shooter.getShooterManualSpeed());
 
           if (shooter.isShooterAtSpeed()) { // && drive.isRobotFacingVirtualHub() &&
             // drive.canShootAtVirtualHub()
             shooter.indexerShoot();
+            SmartDashboard.putString("Shooter State", "SPIN_UP");
           } else {
             shooter.stopIndexer();
+            SmartDashboard.putString("Shooter State", "SHOOT");
           }
         },
         shooter);
   }
-  // /**
-  //  * sets manual shoot velocity, takes rpm change per second.
-  //  *
-  //  * @param shooter
-  //  * @param velocity
-  //  * @return
-  //  */
-  // public static Command changeManualVelocity(
-  //     Shooter shooter, DoubleSupplier delta) {
-  //   return Commands.run(
-  //       () -> {
-  //         shooter.setShooterManualSpeed(MathUtil.clamp(
-  //                 shooter.getShooterManualSpeed() + delta.getAsDouble(),
-  //                 500,
-  //                 4000));
-  //         shooter.shoot(shooter.getShooterManualSpeed());
 
-  //         SmartDashboard.putNumber("shooterManualVelocity", shooter.getShooterManualSpeed());
-  //       },
-  //       shooter);
-  // }
-  // public static Command spinUp(Shooter shooter) {
-  //   return Commands.run(
-  //       () -> {
-  //         shooter.spinUp();
-  //       },
-  //       shooter);
-  // }
+  public static Command changeManualVelocity(Shooter shooter, DoubleSupplier deltaRaw) {
+    return Commands.run(
+        () -> {
+          double delta = MathUtil.applyDeadband(deltaRaw.getAsDouble(), DEADBAND) * 4;
+
+          shooter.setShooterManualSpeed(
+              Math.round(MathUtil.clamp(shooter.getShooterManualSpeed() + delta, 500, 4000)));
+        });
+  }
+
+  public static Command setManualVelocity(Shooter shooter, Double rpm) {
+    return Commands.run(
+        () -> {
+          shooter.setShooterManualSpeed(Math.round(MathUtil.clamp(rpm, 500, 4000)));
+        });
+  }
+
+  public static Command spinUp(Shooter shooter) {
+    return Commands.run(
+        () -> {
+          shooter.spinUp();
+          SmartDashboard.putString("Shooter State", "SPIN_UP");
+        },
+        shooter);
+  }
 
   public static Command intake(Shooter shooter) {
     return Commands.run(
         () -> {
           shooter.intake();
+          SmartDashboard.putString("Shooter State", "INTAKE");
         },
         shooter);
   }
@@ -103,6 +96,7 @@ public class ShooterCommands {
     return Commands.run(
         () -> {
           shooter.eject();
+          SmartDashboard.putString("Shooter State", "EJECT");
         },
         shooter);
   }
