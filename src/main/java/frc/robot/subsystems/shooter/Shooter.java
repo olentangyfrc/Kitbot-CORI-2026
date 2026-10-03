@@ -100,7 +100,7 @@ public class Shooter extends SubsystemBase {
   }
   /** Runs shooter and indexer motor so fuel is ejected out of intake. */
   public void eject() {
-    setShooterSpeed(-intakeMaxVelocity);
+    setShooterSpeed(-4000);
     setIndexerSpeed(indexerMaxVelocity);
   }
 
@@ -172,7 +172,7 @@ public class Shooter extends SubsystemBase {
     SmartDashboard.putNumber("Shooter Set Target RPM", getShooterTargetSpeed());
     SmartDashboard.putNumber("Shooter Target RPM", getShooterManualSpeed());
     SmartDashboard.putBoolean("Is Shooter At Speed", isShooterAtSpeed());
-    if (targetVelocity > 0) {
+    if (targetVelocity != 0) {
       shooterMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(targetVelocity / 60));
     }
   }

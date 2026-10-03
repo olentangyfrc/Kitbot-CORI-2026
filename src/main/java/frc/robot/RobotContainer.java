@@ -82,7 +82,8 @@ public class RobotContainer {
             drive,
             () -> -controller.getLeftY(),
             () -> controller.getLeftX(),
-            () -> controller.getRawAxis(4) // temporary fix for some random bug
+            () -> controller.getRawAxis(4),
+            () -> controller.rightBumper().getAsBoolean() // temporary fix for some random bug
             ));
 
     shooter.setDefaultCommand(ShooterCommands.stop(shooter));
@@ -94,7 +95,8 @@ public class RobotContainer {
                 drive,
                 () -> -controller.getLeftY(),
                 () -> controller.getLeftX(),
-                () -> controller.getRawAxis(4) // temporary fix for some random bug
+                () -> controller.getRawAxis(4),
+                () -> controller.rightBumper().getAsBoolean() // temporary fix for some random bug
                 ));
     // Shoot towards a virtual target when moving to score correctly.
     // controller
@@ -112,9 +114,7 @@ public class RobotContainer {
     // controller.rightTrigger(0.35).whileTrue(ShooterCommands.spinUp(shooter));
 
     controller.leftTrigger().whileTrue(ShooterCommands.intake(shooter));
-    controller
-        .rightTrigger(0.35)
-        .whileTrue(ShooterCommands.shoot(shooter, drive).alongWith(DriveCommands.stopWithX(drive)));
+    controller.rightTrigger(0.35).whileTrue(ShooterCommands.shoot(shooter, drive));
 
     controller.b().whileTrue(ShooterCommands.eject(shooter));
 
@@ -130,9 +130,9 @@ public class RobotContainer {
         .whileTrue(
             ShooterCommands.changeManualVelocity(shooter, () -> controller2.getRightTriggerAxis()));
 
-    controller2.x().whileTrue(ShooterCommands.setManualVelocity(shooter, 2000.0));
-    controller2.y().whileTrue(ShooterCommands.setManualVelocity(shooter, 3000.0));
-    controller2.b().whileTrue(ShooterCommands.setManualVelocity(shooter, 3500.0));
+    controller2.x().whileTrue(ShooterCommands.setManualVelocity(shooter, 3000.0));
+    controller2.y().whileTrue(ShooterCommands.setManualVelocity(shooter, 3500.0));
+    controller2.b().whileTrue(ShooterCommands.setManualVelocity(shooter, 4000.0));
 
     controller2
         .povUp()

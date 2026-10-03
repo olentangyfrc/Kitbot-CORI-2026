@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.Drive;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -20,15 +21,16 @@ public class DriveCommands {
   private DriveCommands() {}
 
   public static Command joystickDrive(
-      Drive drive, DoubleSupplier x, DoubleSupplier y, DoubleSupplier omega) {
+      Drive drive, DoubleSupplier x, DoubleSupplier y, DoubleSupplier omega, BooleanSupplier slow) {
     return Commands.run(
         () -> {
+          double slowValue = slow.getAsBoolean() ? 0.5 : 1;
           double xSpeed = MathUtil.applyDeadband(x.getAsDouble(), DEADBAND);
           double ySpeed = MathUtil.applyDeadband(y.getAsDouble(), DEADBAND);
           double omegaSpeed = MathUtil.applyDeadband(omega.getAsDouble(), DEADBAND);
 
-          xSpeed = Math.copySign(xSpeed * xSpeed, xSpeed) * maxLinearSpeed;
-          ySpeed = Math.copySign(ySpeed * ySpeed, ySpeed) * maxLinearSpeed;
+          xSpeed = Math.copySign(xSpeed * xSpeed, xSpeed) * maxLinearSpeed * slowValue;
+          ySpeed = Math.copySign(ySpeed * ySpeed, ySpeed) * maxLinearSpeed * slowValue;
           omegaSpeed = Math.copySign(omegaSpeed * omegaSpeed, omegaSpeed) * maxLinearSpeed;
 
           ChassisSpeeds chassisSpeeds = new ChassisSpeeds(xSpeed, ySpeed, omegaSpeed);
@@ -40,11 +42,13 @@ public class DriveCommands {
   }
 
   public static Command joystickDriveSnake(
-      Drive drive, DoubleSupplier x, DoubleSupplier y, DoubleSupplier omega) {
+      Drive drive, DoubleSupplier x, DoubleSupplier y, DoubleSupplier omega, BooleanSupplier slow) {
     PIDController angleController = new PIDController(8, 0, 0);
     angleController.enableContinuousInput(-Math.PI, Math.PI);
     return Commands.run(
             () -> {
+              double slowValue = slow.getAsBoolean() ? 0.5 : 1;
+
               double xSpeed = MathUtil.applyDeadband(x.getAsDouble(), DEADBAND);
               double ySpeed = MathUtil.applyDeadband(y.getAsDouble(), DEADBAND);
               double omegaSpeed = MathUtil.applyDeadband(omega.getAsDouble(), DEADBAND);
@@ -53,8 +57,8 @@ public class DriveCommands {
                 snakeAngle = Math.atan2(ySpeed, xSpeed);
               }
 
-              xSpeed = Math.copySign(xSpeed * xSpeed, xSpeed) * maxLinearSpeed;
-              ySpeed = Math.copySign(ySpeed * ySpeed, ySpeed) * maxLinearSpeed;
+              xSpeed = Math.copySign(xSpeed * xSpeed, xSpeed) * maxLinearSpeed * slowValue;
+              ySpeed = Math.copySign(ySpeed * ySpeed, ySpeed) * maxLinearSpeed * slowValue;
               omegaSpeed = Math.copySign(omegaSpeed * omegaSpeed, omegaSpeed) * maxLinearSpeed;
 
               double snakeOmegaSpeed =
