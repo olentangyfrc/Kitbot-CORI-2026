@@ -1,12 +1,12 @@
 package frc.robot.commands;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 // import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
-import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.shooter.Shooter;
 import java.util.function.DoubleSupplier;
 
@@ -40,10 +40,32 @@ public class ShooterCommands {
         shooter);
   }
 
-  public static Command shoot(Shooter shooter, Drive drive) {
+  public static Command shoot(Shooter shooter) {
     return Commands.run(
         () -> {
           shooter.shoot(shooter.getShooterManualSpeed());
+
+          if (shooter.isShooterAtSpeed()) { // && drive.isRobotFacingVirtualHub() &&
+            // drive.canShootAtVirtualHub()
+            shooter.indexerShoot();
+            SmartDashboard.putString("Shooter State", "SPIN_UP");
+          } else {
+            shooter.stopIndexer();
+            SmartDashboard.putString("Shooter State", "SHOOT");
+          }
+        },
+        shooter);
+  }
+
+  public static Command shootAuto(Shooter shooter) {
+    return Commands.run(
+        () -> {
+          if (DriverStation.getMatchTime() > 5) {
+            shooter.shoot(3400.0);
+          } else {
+            shooter.stopShooter();
+            shooter.setIndexerSpeed(0);
+          }
 
           if (shooter.isShooterAtSpeed()) { // && drive.isRobotFacingVirtualHub() &&
             // drive.canShootAtVirtualHub()

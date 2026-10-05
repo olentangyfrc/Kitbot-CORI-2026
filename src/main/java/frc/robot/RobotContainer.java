@@ -34,8 +34,9 @@ public class RobotContainer {
   private final CommandXboxController controller = new CommandXboxController(0);
   private final CommandXboxController controller2 = new CommandXboxController(1);
 
-  // Dashboard inputs
-  // private final LoggedDashboardChooser<Command> autoChooser;
+  // private final Command simpleAuto = new ; // replce with command
+  // SendableChooser<Command> chooser = new SendableChooser<>();
+  // chooser.addOption();
 
   /** The container for the robot. Contains subsystems, IO devices, and commands. */
   public RobotContainer() {
@@ -44,27 +45,29 @@ public class RobotContainer {
         // Real robot, instantiate hardware IO implementations
         drive = new Drive();
         shooter = new Shooter();
+        // chooser.setDefaultCommand("Simple Auto", simpleAuto);
+        // SmartDashboard.putData("Auto Chooser", chooser);
         break;
 
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
         drive = new Drive();
         shooter = new Shooter();
-
+        // chooser.setDefaultCommand("Simple Auto", simpleAuto);
+        // SmartDashboard.putData("Auto Chooser", chooser);
         break;
 
       default:
         // Replayed robot, disable IO implementations
         drive = new Drive();
         shooter = new Shooter();
-
+        // chooser.setDefaultCommand("Simple Auto", simpleAuto);
+        // SmartDashboard.putData("Auto Chooser", chooser);
         break;
     }
 
     shooter.init();
-    // Set up auto routines
-    // autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
-    // autoChooser = null;
+
     // Configure the button bindings
     configureButtonBindings();
   }
@@ -114,7 +117,7 @@ public class RobotContainer {
     // controller.rightTrigger(0.35).whileTrue(ShooterCommands.spinUp(shooter));
 
     controller.leftTrigger().whileTrue(ShooterCommands.intake(shooter));
-    controller.rightTrigger(0.35).whileTrue(ShooterCommands.shoot(shooter, drive));
+    controller.rightTrigger(0.35).whileTrue(ShooterCommands.shoot(shooter));
 
     controller.b().whileTrue(ShooterCommands.eject(shooter));
 
@@ -149,7 +152,7 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    // return autoChooser.get();
-    return null;
+    return ShooterCommands.shootAuto(shooter);
+    // return null;
   }
 }
