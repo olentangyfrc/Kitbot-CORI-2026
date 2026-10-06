@@ -84,8 +84,8 @@ public class RobotContainer {
         DriveCommands.joystickDrive(
             drive,
             () -> -controller.getLeftY(),
-            () -> controller.getLeftX(),
-            () -> controller.getRawAxis(4),
+            () -> -controller.getLeftX(),
+            () -> -controller.getRawAxis(4),
             () -> controller.rightBumper().getAsBoolean() // temporary fix for some random bug
             ));
 
@@ -97,8 +97,8 @@ public class RobotContainer {
             DriveCommands.joystickDriveSnake(
                 drive,
                 () -> -controller.getLeftY(),
-                () -> controller.getLeftX(),
-                () -> controller.getRawAxis(4),
+                () -> -controller.getLeftX(),
+                () -> -controller.getRawAxis(4),
                 () -> controller.rightBumper().getAsBoolean() // temporary fix for some random bug
                 ));
     // Shoot towards a virtual target when moving to score correctly.

@@ -34,11 +34,11 @@ public class ModuleIO extends SubsystemBase {
 
   // odometry stuff, need change later
   private double steerP = 5;
-  private final double wheelRadius = Units.inchesToMeters(1.8125); // inches
+  private final double wheelRadius = Units.inchesToMeters(1.8125);
   private final double wheelCircumference = 2 * Math.PI * wheelRadius;
   private final double gearRatio = 1 / 8.14; // maybe 8.33
 
-  private double driveVelocity = 0; // meters per second
+  private double driveVelocity = 0; // mps
   private Rotation2d steerAngle = new Rotation2d();
 
   public ModuleIO(int driveMotorCanId, int steerMotorCanId, int encoderId, double motorOffset) {
@@ -46,6 +46,7 @@ public class ModuleIO extends SubsystemBase {
     steerMotor = new SparkMax(steerMotorCanId, MotorType.kBrushless);
     // encoder = new AnalogEncoder(encoderId);
     encoder = new AnalogEncoder(encoderId, 2 * Math.PI, 0);
+    encoder.setInverted(true); // TEST
 
     offset = motorOffset; // radians
 
@@ -83,24 +84,22 @@ public class ModuleIO extends SubsystemBase {
     steerAngle = state.angle;
 
     double steerOutput =
-        -steerPIDController.calculate(getEncoderRadians(), state.angle.getRadians());
+        steerPIDController.calculate(getEncoderRadians(), state.angle.getRadians());
 
     if (swerveTuningMode) {
       steerOutput = steerTuningOutput;
     }
     // SmartDashboard.putNumber("swerveSteetOutput" + steerMotor.getDeviceId(), steerOutput);
 
-    // double driveOutput = (state.speedMetersPerSecond / wheelCircumference) * gearRatio;
     double driveOutput =
         (state.speedMetersPerSecond * Constants.falconMaxSpeed) / Constants.maxLinearSpeed;
 
     driveMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(driveOutput / 60));
-    // driveMotor.setVoltage(driveOutput / 60);
     steerMotor.setVoltage(steerOutput);
   }
 
   public double getEncoderRadians() {
-    return encoder.get() - Math.PI - offset;
+    return encoder.get() + offset;
   }
   /**
    * Gets the current position of the swerve module. Mostly used for odometry
