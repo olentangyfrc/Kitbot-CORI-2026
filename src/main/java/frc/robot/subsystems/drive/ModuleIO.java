@@ -16,6 +16,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.AnalogEncoder;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 // import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -41,6 +42,14 @@ public class ModuleIO extends SubsystemBase {
   private double driveVelocity = 0; // mps
   private Rotation2d steerAngle = new Rotation2d();
 
+  /**
+   * Swerve module constructor class. Offset in degrees
+   *
+   * @param driveMotorCanId
+   * @param steerMotorCanId
+   * @param encoderId
+   * @param motorOffset
+   */
   public ModuleIO(int driveMotorCanId, int steerMotorCanId, int encoderId, double motorOffset) {
     driveMotor = new TalonFX(driveMotorCanId, "rio");
     steerMotor = new SparkMax(steerMotorCanId, MotorType.kBrushless);
@@ -48,7 +57,7 @@ public class ModuleIO extends SubsystemBase {
     encoder = new AnalogEncoder(encoderId, 2 * Math.PI, 0);
     encoder.setInverted(true); // TEST
 
-    offset = motorOffset; // radians
+    offset = Units.degreesToRadians(motorOffset); // radians
 
     driveConfig = new TalonFXConfiguration();
     driveConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
@@ -73,7 +82,7 @@ public class ModuleIO extends SubsystemBase {
     // SmartDashboard.putNumber("steerP", steerP);
     // SmartDashboard.putNumber("steerTuningOutput" + steerMotor.getDeviceId(), steerTuningOutput);
   }
-
+  /** Sets the target state for the swerve module to go to. */
   public void setState(SwerveModuleState state) {
     Rotation2d encoderRotation2d = new Rotation2d(getEncoderRadians());
 
@@ -89,7 +98,6 @@ public class ModuleIO extends SubsystemBase {
     if (swerveTuningMode) {
       steerOutput = steerTuningOutput;
     }
-    // SmartDashboard.putNumber("swerveSteetOutput" + steerMotor.getDeviceId(), steerOutput);
 
     double driveOutput =
         (state.speedMetersPerSecond * Constants.falconMaxSpeed) / Constants.maxLinearSpeed;
@@ -104,7 +112,7 @@ public class ModuleIO extends SubsystemBase {
   /**
    * Gets the current position of the swerve module. Mostly used for odometry
    *
-   * @return Distance in meters, module angle.
+   * @return Current distance in meters and current angle.
    */
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(
@@ -114,27 +122,25 @@ public class ModuleIO extends SubsystemBase {
   /**
    * Gets the target state of the swerve module.
    *
-   * @return Drive velocity, angle.
+   * @return Target drive velocity and angle.
    */
   public SwerveModuleState getState() {
     return new SwerveModuleState(driveVelocity, steerAngle);
   }
-}
 
-  // public void periodic() {
+  public void periodic() {
     // swerveTuningMode = SmartDashboard.getBoolean("swerveTuningMode", swerveTuningMode);
 
     // if (swerveTuningMode) {
-    //   steerP = SmartDashboard.getNumber("steerP", steerP);
-    //   steerPIDController.setP(steerP);
+    // steerP = SmartDashboard.getNumber("steerP", steerP);
+    // steerPIDController.setP(steerP);
 
-    //   SmartDashboard.putNumber(
-    //       "steerMotorId" + steerMotor.getDeviceId(), getPosition().angle.getDegrees());
+    SmartDashboard.putNumber(
+        "SteerEncoder" + steerMotor.getDeviceId(), getState().angle.getDegrees());
 
-    //   steerTuningOutput =
-    //       SmartDashboard.getNumber(
-    //           "steerTuningOutput" + steerMotor.getDeviceId(), steerTuningOutput);
+    // steerTuningOutput =
+    //     SmartDashboard.getNumber(
+    //         "steerTuningOutput" + steerMotor.getDeviceId(), steerTuningOutput);
     // }
-    // SmartDashboard.putNumber("encoder" + steerMotor.getDeviceId(), getEncoderRadians());
-//   }
-// }
+  }
+}

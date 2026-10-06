@@ -16,7 +16,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 // shooter and intake are controlled by the same motor. indexer in same subsystem.
 public class Shooter extends SubsystemBase {
-  // tune
   // all in rpm
   private final double spinUpVelocity = 1500;
   private final double shootMaxVelocity = 3000;
@@ -31,10 +30,10 @@ public class Shooter extends SubsystemBase {
   private TalonFXConfiguration shooterConfig;
   private SparkMaxConfig indexerConfig;
 
-  private final int shooterCanId = 40; // change later
+  private final int shooterCanId = 40;
   private TalonFX shooterMotor;
 
-  private final int indexerCanId = 21; // change later
+  private final int indexerCanId = 21;
   private SparkMax indexerMotor;
 
   public Shooter() {
@@ -47,7 +46,6 @@ public class Shooter extends SubsystemBase {
     shooterConfig = new TalonFXConfiguration();
     shooterConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
     shooterConfig.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
-    // tune
     shooterConfig.Slot0 = new com.ctre.phoenix6.configs.Slot0Configs();
     shooterConfig.Slot0.kP = 0.15711;
     shooterConfig.Slot0.kI = 0;
@@ -59,24 +57,15 @@ public class Shooter extends SubsystemBase {
 
     indexerConfig = new SparkMaxConfig();
     indexerConfig.idleMode(IdleMode.kBrake);
-    indexerConfig.inverted(false); // test this
-    // tune
+    indexerConfig.inverted(false);
     indexerMotor.configure(
         indexerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
-  /**
-   * Sets shooter motor speed in RPM.
-   *
-   * @param speed
-   */
+  /** Sets shooter motor speed in RPM. */
   public void setShooterSpeed(double speed) {
     targetVelocity = speed;
   }
-  /**
-   * Sets indexer motor speed in RPM.
-   *
-   * @param speed
-   */
+  /** Sets indexer motor speed in RPM. */
   public void setIndexerSpeed(double speed) {
     indexerMotor.setVoltage(speed);
   }
@@ -103,7 +92,7 @@ public class Shooter extends SubsystemBase {
     setShooterSpeed(-4000);
     setIndexerSpeed(indexerMaxVelocity);
   }
-
+  /** Runs shooter at specified speed in RPM */
   public void shoot(Double speed) {
     setShooterSpeed(speed);
   }
@@ -111,8 +100,6 @@ public class Shooter extends SubsystemBase {
   /**
    * Sets shooter speed to correct value based off distance. Uses an interpolation table to
    * calculate speed.
-   *
-   * @param distanceMeters
    */
   public void shootForHub(double distanceMeters) {
     shooterParams = ShooterUtil.getInterpolatedValues(distanceMeters);
@@ -133,36 +120,24 @@ public class Shooter extends SubsystemBase {
   public void indexerShoot() {
     setIndexerSpeed(indexerMaxVelocity);
   }
-  /**
-   * Checks if the shooter's current speed is within tolerance of the target speed.
-   *
-   * @return True if shooter speed is within tolerance.
-   */
+  /** Checks if the shooter's current speed is within tolerance of the target speed. */
   public boolean isShooterAtSpeed() {
     return (shooterMotor.getClosedLoopError().getValueAsDouble() * 60 <= shooterVelocityTolerance)
-        && getShooterSpeed() > 0;
+        && getShooterSpeed() != 0;
   }
-  /**
-   * Gets the current shooter speed.
-   *
-   * @return Current shooter speed in RPM.
-   */
+  /** Gets the current shooter speed in RPM. */
   public double getShooterSpeed() {
     return shooterMotor.getVelocity().getValueAsDouble() * 60;
   }
-  /**
-   * Gets the shooters target speed.
-   *
-   * @return Shooter target speed in RPM.
-   */
+  /** Gets the shooters target speed in RPM. */
   public double getShooterTargetSpeed() {
     return targetVelocity;
   }
-
+  /** Sets manual shooter velocity in RPM. */
   public void setShooterManualSpeed(double speed) {
     shooterManualVelocity = speed;
   }
-
+  /** Returns manual shooter speed in RPM. */
   public double getShooterManualSpeed() {
     return shooterManualVelocity;
   }

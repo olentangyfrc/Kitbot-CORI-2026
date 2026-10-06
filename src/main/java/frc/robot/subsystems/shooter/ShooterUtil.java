@@ -9,7 +9,7 @@ public class ShooterUtil {
 
   static {
     // need to tune
-    // distance (meters), rpm
+    // distance in meters, rpm
     double[][] highCeilingData = {
       {0, 0},
       {1, 500},
