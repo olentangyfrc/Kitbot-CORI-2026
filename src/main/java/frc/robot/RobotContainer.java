@@ -34,8 +34,9 @@ public class RobotContainer {
   private final CommandXboxController controller = new CommandXboxController(0);
   private final CommandXboxController controller2 = new CommandXboxController(1);
 
-  // Dashboard inputs
-  // private final LoggedDashboardChooser<Command> autoChooser;
+  // private final Command simpleAuto = new ; // replce with command
+  // SendableChooser<Command> chooser = new SendableChooser<>();
+  // chooser.addOption();
 
   /** The container for the robot. Contains subsystems, IO devices, and commands. */
   public RobotContainer() {
@@ -44,27 +45,29 @@ public class RobotContainer {
         // Real robot, instantiate hardware IO implementations
         drive = new Drive();
         shooter = new Shooter();
+        // chooser.setDefaultCommand("Simple Auto", simpleAuto);
+        // SmartDashboard.putData("Auto Chooser", chooser);
         break;
 
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
         drive = new Drive();
         shooter = new Shooter();
-
+        // chooser.setDefaultCommand("Simple Auto", simpleAuto);
+        // SmartDashboard.putData("Auto Chooser", chooser);
         break;
 
       default:
         // Replayed robot, disable IO implementations
         drive = new Drive();
         shooter = new Shooter();
-
+        // chooser.setDefaultCommand("Simple Auto", simpleAuto);
+        // SmartDashboard.putData("Auto Chooser", chooser);
         break;
     }
 
     shooter.init();
-    // Set up auto routines
-    // autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
-    // autoChooser = null;
+
     // Configure the button bindings
     configureButtonBindings();
   }
@@ -82,7 +85,8 @@ public class RobotContainer {
             drive,
             () -> -controller.getLeftY(),
             () -> controller.getLeftX(),
-            () -> controller.getRawAxis(4) // temporary fix for some random bug
+            () -> controller.getRawAxis(4),
+            () -> controller.rightBumper().getAsBoolean() // temporary fix for some random bug
             ));
 
     shooter.setDefaultCommand(ShooterCommands.stop(shooter));
@@ -94,7 +98,8 @@ public class RobotContainer {
                 drive,
                 () -> -controller.getLeftY(),
                 () -> controller.getLeftX(),
-                () -> controller.getRawAxis(4) // temporary fix for some random bug
+                () -> controller.getRawAxis(4),
+                () -> controller.rightBumper().getAsBoolean() // temporary fix for some random bug
                 ));
     // Shoot towards a virtual target when moving to score correctly.
     // controller
@@ -112,27 +117,32 @@ public class RobotContainer {
     // controller.rightTrigger(0.35).whileTrue(ShooterCommands.spinUp(shooter));
 
     controller.leftTrigger().whileTrue(ShooterCommands.intake(shooter));
-    controller
-        .rightTrigger(0.35)
-        .whileTrue(
-            ShooterCommands.shoot(
-                shooter,
-                drive,
-                () -> controller2.getLeftTriggerAxis(),
-                () -> controller2.getRightTriggerAxis()));
+    controller.rightTrigger(0.35).whileTrue(ShooterCommands.shoot(shooter));
 
     controller.b().whileTrue(ShooterCommands.eject(shooter));
 
     controller.start().whileTrue(DriveCommands.resetGyro(drive));
     controller2.start().whileTrue(DriveCommands.resetGyro(drive));
 
-    // controller2.leftTrigger().whileTrue(ShooterCommands.changeManualVelocity(shooter, () ->
-    // controller2.getLeftTriggerAxis()));
-    // controller2.rightTrigger().whileTrue(ShooterCommands.changeManualVelocity(shooter, () ->
-    // controller2.getRightTriggerAxis()));
+    controller2
+        .leftTrigger()
+        .whileTrue(
+            ShooterCommands.changeManualVelocity(shooter, () -> -controller2.getLeftTriggerAxis()));
+    controller2
+        .rightTrigger()
+        .whileTrue(
+            ShooterCommands.changeManualVelocity(shooter, () -> controller2.getRightTriggerAxis()));
 
-    controller2.povUp().whileTrue(ShooterCommands.setIndexerVelocity(shooter, -6));
-    controller2.povDown().whileTrue(ShooterCommands.setIndexerVelocity(shooter, 6));
+    controller2.x().whileTrue(ShooterCommands.setManualVelocity(shooter, 3000.0));
+    controller2.y().whileTrue(ShooterCommands.setManualVelocity(shooter, 3500.0));
+    controller2.b().whileTrue(ShooterCommands.setManualVelocity(shooter, 4000.0));
+
+    controller2
+        .povUp()
+        .whileTrue(ShooterCommands.setIndexerVelocity(shooter, -Constants.indexerMaxVelocity));
+    controller2
+        .povDown()
+        .whileTrue(ShooterCommands.setIndexerVelocity(shooter, Constants.indexerMaxVelocity));
   }
   ;
 
@@ -142,7 +152,7 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    // return autoChooser.get();
-    return null;
+    return ShooterCommands.shootAuto(shooter);
+    // return null;
   }
 }

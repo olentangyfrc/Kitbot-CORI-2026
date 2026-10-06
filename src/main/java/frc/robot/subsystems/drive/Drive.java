@@ -14,15 +14,16 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
+// import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 public class Drive extends SubsystemBase {
   // meters
-  private final double robotWidth = 0.8128;
-  private final double robotLength = 0.5842;
+  private final double robotWidth =
+      0.5842; // need to change!!! measure from center to center, not frame perimeter!
+  private final double robotLength = 0.8128;
 
   private final double maxSpeed = Constants.maxLinearSpeed; // mps
 
@@ -53,7 +54,7 @@ public class Drive extends SubsystemBase {
   private ChassisSpeeds chassisSpeeds = new ChassisSpeeds();
   // private Pose2d recentPose;
   private final Field2d field = new Field2d();
-  private final FieldObject2d virtualHub = field.getObject("virtualHub");
+  // private final FieldObject2d virtualHub = field.getObject("virtualHub");
   private SwerveDrivePoseEstimator poseEstimator;
 
   private final double angleTolerance = 10; // degrees
@@ -193,17 +194,16 @@ public class Drive extends SubsystemBase {
   public void stopWithX() {
     switch (Constants.currentMode) {
       case REAL:
-        frontLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
-        frontRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
-        backLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
-        backRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+        frontLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
+        frontRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+        backLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+        backRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
         break;
       case SIM:
         break;
       default:
         break;
     }
-    stop();
   }
   /**
    * Gets positions of swerve modules in relation to the center of the robot.
@@ -347,15 +347,15 @@ public class Drive extends SubsystemBase {
 
   public void periodic() {
     field.setRobotPose(robotPose);
-    virtualHub.setPose(
-        getVirtualHubPosition().getX(), getVirtualHubPosition().getY(), new Rotation2d());
+    // virtualHub.setPose(
+    //     getVirtualHubPosition().getX(), getVirtualHubPosition().getY(), new Rotation2d());
 
-    SmartDashboard.putData("poseField", field);
-    SmartDashboard.putNumber("robotGyro", getRotation().getRadians());
+    SmartDashboard.putData("Field", field);
+    SmartDashboard.putNumber("Robot Gyro Degrees", getRotation().getDegrees());
 
-    SmartDashboard.putBoolean("IsRobotFacingVirtualHub", isRobotFacingVirtualHub());
-    SmartDashboard.putBoolean("canShootAtVirtualHub", canShootAtVirtualHub());
+    // SmartDashboard.putBoolean("IsRobotFacingVirtualHub", isRobotFacingVirtualHub());
+    // SmartDashboard.putBoolean("canShootAtVirtualHub", canShootAtVirtualHub());
 
-    updateRobotPose();
+    // updateRobotPose();
   }
 }

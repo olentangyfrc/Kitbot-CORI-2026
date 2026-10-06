@@ -20,6 +20,13 @@ public final class Constants {
 
   public static final double maxLinearSpeed = 5; // mps
   public static final double falconMaxSpeed = 6380;
+  public static final double DEADBAND = 0.1;
+
+  public static final double spinUpVelocity = 1500;
+  public static final double shootMaxVelocity = 3000;
+  public static final double intakeMaxVelocity = 2000;
+  public static final double indexerMaxVelocity = 6;
+  public static final double shooterVelocityTolerance = 120;
 
   public static enum Mode {
     /** Running on a real robot. */
