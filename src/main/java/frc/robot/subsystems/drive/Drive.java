@@ -2,11 +2,11 @@ package frc.robot.subsystems.drive;
 
 import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.hardware.Pigeon2;
+import com.ctre.phoenix6.sim.Pigeon2SimState;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -15,11 +15,14 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.simulation.BatterySim;
+import edu.wpi.first.wpilibj.simulation.RoboRioSim;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-// import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
+import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.subsystems.drive.ModuleIO.ModuleIOInputs;
 
 public class Drive extends SubsystemBase {
   // need to change!!! measure from center of swerveto center, not frame perimeter!
@@ -29,12 +32,18 @@ public class Drive extends SubsystemBase {
   private final double maxSpeed = Constants.maxLinearSpeed; // mps
 
   private final Pigeon2 gyro;
+  private final Pigeon2SimState gyroSim;
   private final Pigeon2Configuration gyroConfig = new Pigeon2Configuration();
 
   private final ModuleIO frontLeftModule;
   private final ModuleIO frontRightModule;
   private final ModuleIO backLeftModule;
   private final ModuleIO backRightModule;
+
+  private ModuleIOInputs frontLeftInputs = new ModuleIOInputs();
+  private ModuleIOInputs frontRightInputs = new ModuleIOInputs();
+  private ModuleIOInputs backLeftInputs = new ModuleIOInputs();
+  private ModuleIOInputs backRightInputs = new ModuleIOInputs();
 
   private final Translation2d frontLeftLocation =
       new Translation2d(robotWidth / 2, robotLength / 2);
@@ -56,23 +65,22 @@ public class Drive extends SubsystemBase {
         new SwerveModulePosition()
       };
 
-  private Pose2d simPose = new Pose2d();
-  // private ChassisSpeeds chassisSpeeds = new ChassisSpeeds();
   private final Field2d field = new Field2d();
-  // private final FieldObject2d virtualHub = field.getObject("virtualHub");
+  private final FieldObject2d virtualHub = field.getObject("virtualHub");
   private final SwerveDrivePoseEstimator poseEstimator;
 
   private final double angleTolerance = 7; // degrees
 
-  public Drive() {
+  public Drive(ModuleIO flModuleIO, ModuleIO frModuleIO, ModuleIO blModuleIO, ModuleIO brModuleIO) {
     // change encoder id, calculate offsets
-    frontLeftModule = new ModuleIO(31, 11, 0, -2.5730803146122083 + Math.PI);
-    frontRightModule = new ModuleIO(30, 13, 1, -0.6588291787123399);
-    backLeftModule = new ModuleIO(33, 15, 2, -1.5260830950994393);
-    backRightModule = new ModuleIO(32, 17, 3, -0.8061077985790659);
+    frontLeftModule = flModuleIO;
+    frontRightModule = frModuleIO;
+    backLeftModule = blModuleIO;
+    backRightModule = brModuleIO;
 
     // change can id
     gyro = new Pigeon2(5);
+    gyroSim = gyro.getSimState();
     gyroConfig.MountPose.withMountPoseYaw(0.0);
     gyroConfig.MountPose.withMountPosePitch(0.0);
     gyroConfig.MountPose.withMountPoseRoll(0.0);
@@ -83,29 +91,59 @@ public class Drive extends SubsystemBase {
         new SwerveDrivePoseEstimator(kinematics, getRotation(), modulePositions, new Pose2d());
 
     SmartDashboard.putData(
-        "Swerve",
+        "Swerve Target",
         builder -> {
           builder.setSmartDashboardType("SwerveDrive");
 
           builder.addDoubleProperty(
-              "Front Left Angle", () -> frontLeftModule.getState().angle.getRadians(), null);
+              "Front Left Angle", () -> frontLeftInputs.swerveState.angle.getRadians(), null);
           builder.addDoubleProperty(
-              "Front Left Velocity", () -> frontLeftModule.getState().speedMetersPerSecond, null);
+              "Front Left Velocity", () -> frontLeftInputs.swerveState.speedMetersPerSecond, null);
 
           builder.addDoubleProperty(
-              "Front Right Angle", () -> frontRightModule.getState().angle.getRadians(), null);
+              "Front Right Angle", () -> frontRightInputs.swerveState.angle.getRadians(), null);
           builder.addDoubleProperty(
-              "Front Right Velocity", () -> frontRightModule.getState().speedMetersPerSecond, null);
+              "Front Right Velocity",
+              () -> frontRightInputs.swerveState.speedMetersPerSecond,
+              null);
 
           builder.addDoubleProperty(
-              "Back Left Angle", () -> backLeftModule.getState().angle.getRadians(), null);
+              "Back Left Angle", () -> backLeftInputs.swerveState.angle.getRadians(), null);
           builder.addDoubleProperty(
-              "Back Left Velocity", () -> backLeftModule.getState().speedMetersPerSecond, null);
+              "Back Left Velocity", () -> backLeftInputs.swerveState.speedMetersPerSecond, null);
 
           builder.addDoubleProperty(
-              "Back Right Angle", () -> backRightModule.getState().angle.getRadians(), null);
+              "Back Right Angle", () -> backRightInputs.swerveState.angle.getRadians(), null);
           builder.addDoubleProperty(
-              "Back Right Velocity", () -> backRightModule.getState().speedMetersPerSecond, null);
+              "Back Right Velocity", () -> backRightInputs.swerveState.speedMetersPerSecond, null);
+
+          builder.addDoubleProperty("Robot Angle", () -> getRotation().getRadians(), null);
+        });
+
+    SmartDashboard.putData(
+        "Swerve Current",
+        builder -> {
+          builder.setSmartDashboardType("SwerveDrive");
+
+          builder.addDoubleProperty(
+              "Front Left Angle", () -> frontLeftInputs.swervePosition.angle.getRadians(), null);
+          builder.addDoubleProperty(
+              "Front Left Velocity", () -> frontLeftInputs.driveVelocityMetersPerSec, null);
+
+          builder.addDoubleProperty(
+              "Front Right Angle", () -> frontRightInputs.swervePosition.angle.getRadians(), null);
+          builder.addDoubleProperty(
+              "Front Right Velocity", () -> frontRightInputs.driveVelocityMetersPerSec, null);
+
+          builder.addDoubleProperty(
+              "Back Left Angle", () -> backLeftInputs.swervePosition.angle.getRadians(), null);
+          builder.addDoubleProperty(
+              "Back Left Velocity", () -> backLeftInputs.driveVelocityMetersPerSec, null);
+
+          builder.addDoubleProperty(
+              "Back Right Angle", () -> backRightInputs.swervePosition.angle.getRadians(), null);
+          builder.addDoubleProperty(
+              "Back Right Velocity", () -> backRightInputs.driveVelocityMetersPerSec, null);
 
           builder.addDoubleProperty("Robot Angle", () -> getRotation().getRadians(), null);
         });
@@ -125,44 +163,27 @@ public class Drive extends SubsystemBase {
     ChassisSpeeds chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(fieldSpeeds, getRotation());
 
     if (Constants.currentMode.toString() == "SIM") {
-      gyro.setYaw(
-          gyro.getYaw().getValueAsDouble()
-              + (Units.radiansToDegrees(chassisSpeeds.omegaRadiansPerSecond) / 50));
+      gyroSim.addYaw(Units.radiansToDegrees(chassisSpeeds.omegaRadiansPerSecond) / 50);
     }
-
-    double modX = chassisSpeeds.vxMetersPerSecond / 50;
-    double modY = chassisSpeeds.vyMetersPerSecond / 50;
-    Rotation2d modOmega = Rotation2d.fromRadians(chassisSpeeds.omegaRadiansPerSecond / 50);
-
-    Transform2d simDelta = new Transform2d(modX, modY, modOmega);
-
-    simPose = simPose.plus(simDelta);
 
     SwerveModuleState[] moduleStates = kinematics.toSwerveModuleStates(chassisSpeeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, maxSpeed);
 
-    frontLeftModule.setState(moduleStates[0]);
-    frontRightModule.setState(moduleStates[1]);
-    backLeftModule.setState(moduleStates[2]);
-    backRightModule.setState(moduleStates[3]);
+    frontLeftModule.setSwerveState(moduleStates[0]);
+    frontRightModule.setSwerveState(moduleStates[1]);
+    backLeftModule.setSwerveState(moduleStates[2]);
+    backRightModule.setSwerveState(moduleStates[3]);
   }
   /** Gets current pose estimator pose or sim pose. */
   public Pose2d getPose() {
-    switch (Constants.currentMode) {
-      case REAL:
-        return poseEstimator.getEstimatedPosition();
-      case SIM:
-        return simPose;
-      default:
-        return new Pose2d();
-    }
+    return poseEstimator.getEstimatedPosition();
   }
   /** Updates pose estimator with swerve module positions. */
   public void updateRobotPose() {
-    modulePositions[0] = frontLeftModule.getPosition();
-    modulePositions[1] = frontRightModule.getPosition();
-    modulePositions[2] = backLeftModule.getPosition();
-    modulePositions[3] = backRightModule.getPosition();
+    modulePositions[0] = frontLeftInputs.swervePosition;
+    modulePositions[1] = frontRightInputs.swervePosition;
+    modulePositions[2] = backLeftInputs.swervePosition;
+    modulePositions[3] = backRightInputs.swervePosition;
 
     poseEstimator.update(getRotation(), modulePositions);
   }
@@ -194,10 +215,10 @@ public class Drive extends SubsystemBase {
   }
   /** Cuts power to drivetrain, but with swerve modules angled in an x to prevent movement. */
   public void stopWithX() {
-    frontLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
-    frontRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
-    backLeftModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
-    backRightModule.setState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+    frontLeftModule.setSwerveState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
+    frontRightModule.setSwerveState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
+    backLeftModule.setSwerveState(new SwerveModuleState(0, Rotation2d.fromDegrees(-45)));
+    backRightModule.setSwerveState(new SwerveModuleState(0, Rotation2d.fromDegrees(45)));
   }
   /** Gets positions of swerve modules in relation to the center of the robot. */
   public Translation2d[] getModuleTranslations() {
@@ -212,10 +233,10 @@ public class Drive extends SubsystemBase {
   /** Gets swerve module states. */
   public SwerveModuleState[] getModuleStates() {
     return new SwerveModuleState[] {
-      frontLeftModule.getState(),
-      frontRightModule.getState(),
-      backLeftModule.getState(),
-      backRightModule.getState()
+      frontLeftInputs.swerveState,
+      frontRightInputs.swerveState,
+      backLeftInputs.swerveState,
+      backRightInputs.swerveState
     };
   }
 
@@ -309,13 +330,34 @@ public class Drive extends SubsystemBase {
   }
 
   public void periodic() {
-    field.setRobotPose(getPose());
-    // virtualHub.setPose(
-    //     getVirtualHubPosition().getX(), getVirtualHubPosition().getY(), new Rotation2d());
+    frontLeftModule.updateInputs(frontLeftInputs);
+    frontRightModule.updateInputs(frontRightInputs);
+    backLeftModule.updateInputs(backLeftInputs);
+    backRightModule.updateInputs(backRightInputs);
 
-    // SmartDashboard.putBoolean("IsRobotFacingVirtualHub", isRobotFacingVirtualHub());
-    // SmartDashboard.putBoolean("canShootAtVirtualHub", canShootAtVirtualHub());
+    field.setRobotPose(getPose());
+    virtualHub.setPose(
+        getVirtualHubPosition().getX(), getVirtualHubPosition().getY(), new Rotation2d());
+
+    SmartDashboard.putBoolean("IsRobotFacingVirtualHub", isRobotFacingVirtualHub());
+    SmartDashboard.putBoolean("canShootAtVirtualHub", canShootAtVirtualHub());
 
     updateRobotPose();
+
+    switch (Constants.currentMode) {
+      case REAL:
+        break;
+      case SIM:
+        RoboRioSim.setVInVoltage( // battery is literally browning out in sim lol
+            BatterySim.calculateDefaultBatteryLoadedVoltage(
+                frontLeftInputs.driveCurrentAmps, frontLeftInputs.steerCurrentAmps
+                // frontRightInputs.driveCurrentAmps, frontRightInputs.steerCurrentAmps,
+                // backLeftInputs.driveCurrentAmps, backLeftInputs.steerCurrentAmps,
+                // backRightInputs.driveCurrentAmps, backRightInputs.steerCurrentAmps
+                ));
+        break;
+      default:
+        break;
+    }
   }
 }

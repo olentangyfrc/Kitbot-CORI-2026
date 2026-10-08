@@ -14,6 +14,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.ShooterCommands;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.ModuleIOReal;
+import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.shooter.Shooter;
 
 // import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -43,7 +45,12 @@ public class RobotContainer {
     switch (Constants.currentMode) {
       case REAL:
         // Real robot, instantiate hardware IO implementations
-        drive = new Drive();
+        drive =
+            new Drive(
+                new ModuleIOReal(31, 11, 0, -2.5730803146122083 + Math.PI),
+                new ModuleIOReal(30, 13, 1, -0.6588291787123399),
+                new ModuleIOReal(33, 15, 2, -1.5260830950994393),
+                new ModuleIOReal(32, 17, 3, -0.8061077985790659));
         shooter = new Shooter();
         // chooser.setDefaultCommand("Simple Auto", simpleAuto);
         // SmartDashboard.putData("Auto Chooser", chooser);
@@ -51,7 +58,12 @@ public class RobotContainer {
 
       case SIM:
         // Sim robot, instantiate physics sim IO implementations
-        drive = new Drive();
+        drive =
+            new Drive(
+                new ModuleIOSim(31, 11, 0, 0.0),
+                new ModuleIOSim(30, 13, 1, 0.0),
+                new ModuleIOSim(33, 15, 2, 0.0),
+                new ModuleIOSim(32, 17, 3, 0.0));
         shooter = new Shooter();
         // chooser.setDefaultCommand("Simple Auto", simpleAuto);
         // SmartDashboard.putData("Auto Chooser", chooser);
@@ -59,7 +71,12 @@ public class RobotContainer {
 
       default:
         // Replayed robot, disable IO implementations
-        drive = new Drive();
+        drive =
+            new Drive(
+                new ModuleIOReal(31, 11, 0, -2.5730803146122083 + Math.PI),
+                new ModuleIOReal(30, 13, 1, -0.6588291787123399),
+                new ModuleIOReal(33, 15, 2, -1.5260830950994393),
+                new ModuleIOReal(32, 17, 3, -0.8061077985790659));
         shooter = new Shooter();
         // chooser.setDefaultCommand("Simple Auto", simpleAuto);
         // SmartDashboard.putData("Auto Chooser", chooser);
