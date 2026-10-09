@@ -7,6 +7,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants;
+import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.shooter.Shooter;
 import java.util.function.DoubleSupplier;
 
@@ -14,6 +15,7 @@ public class ShooterCommands {
 
   Shooter shooter;
   private static final double DEADBAND = Constants.DEADBAND;
+  private static boolean manualToggle = false;
 
   // public static Command setShooterVelocity(Shooter shooter, double velocity) {
   //   return Commands.run(
@@ -40,18 +42,31 @@ public class ShooterCommands {
         shooter);
   }
 
-  public static Command shoot(Shooter shooter) {
+  public static Command shoot(Shooter shooter, Drive drive) {
     return Commands.run(
         () -> {
-          shooter.shoot(shooter.getShooterManualSpeed());
+          if (manualToggle) {
+            shooter.shoot(shooter.getShooterManualSpeed());
 
-          if (shooter.isShooterAtSpeed()) { // && drive.isRobotFacingVirtualHub() &&
-            // drive.canShootAtVirtualHub()
-            shooter.indexerShoot();
-            SmartDashboard.putString("Shooter State", "SPIN_UP");
+            if (shooter.isShooterAtSpeed()) {
+              shooter.indexerShoot();
+              SmartDashboard.putString("Shooter State", "SPIN_UP");
+            } else {
+              shooter.stopIndexer();
+              SmartDashboard.putString("Shooter State", "SHOOT_MANUAL");
+            }
           } else {
-            shooter.stopIndexer();
-            SmartDashboard.putString("Shooter State", "SHOOT");
+            shooter.shootForHub(drive.getDistanceFromVirtualHub());
+
+            if (shooter.isShooterAtSpeed()
+                && drive.isRobotFacingVirtualHub()
+                && drive.canShootAtVirtualHub()) {
+              shooter.indexerShoot();
+              SmartDashboard.putString("Shooter State", "SPIN_UP");
+            } else {
+              shooter.stopIndexer();
+              SmartDashboard.putString("Shooter State", "SHOOT");
+            }
           }
         },
         shooter);
@@ -77,6 +92,14 @@ public class ShooterCommands {
           }
         },
         shooter);
+  }
+
+  public static Command shooterManualOverride(Shooter shooter) {
+    return Commands.runOnce(
+        () -> {
+          manualToggle = !manualToggle;
+          SmartDashboard.putBoolean("Manual Shooter Toggle", manualToggle);
+        });
   }
 
   public static Command changeManualVelocity(Shooter shooter, DoubleSupplier deltaRaw) {

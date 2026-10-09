@@ -118,12 +118,6 @@ public class RobotContainer {
                 () -> -controller.getRawAxis(4),
                 () -> controller.rightBumper().getAsBoolean() // temporary fix for some random bug
                 ));
-    // Shoot towards a virtual target when moving to score correctly.
-    // controller
-    //     .rightTrigger(0.35)
-    //     .whileTrue(
-    //         DriveCommands.shootOnTheMove(
-    //             drive, () -> -controller.getLeftY(), () -> -controller.getLeftX()));
     // unused point to hub code, shoot on move is better
     // controller
     //     .x()
@@ -134,7 +128,13 @@ public class RobotContainer {
     // controller.rightTrigger(0.35).whileTrue(ShooterCommands.spinUp(shooter));
 
     controller.leftTrigger().whileTrue(ShooterCommands.intake(shooter));
-    controller.rightTrigger(0.35).whileTrue(ShooterCommands.shoot(shooter));
+    controller
+        .rightTrigger(0.35)
+        .whileTrue(
+            ShooterCommands.shoot(shooter, drive)
+                .alongWith(
+                    DriveCommands.shootOnTheMove(
+                        drive, () -> -controller.getLeftY(), () -> -controller.getLeftX())));
 
     controller.b().whileTrue(ShooterCommands.eject(shooter));
 
@@ -149,6 +149,7 @@ public class RobotContainer {
         .rightTrigger()
         .whileTrue(
             ShooterCommands.changeManualVelocity(shooter, () -> controller2.getRightTriggerAxis()));
+    controller2.a().whileTrue(ShooterCommands.shooterManualOverride(shooter));
 
     controller2.x().whileTrue(ShooterCommands.setManualVelocity(shooter, 3000.0));
     controller2.y().whileTrue(ShooterCommands.setManualVelocity(shooter, 3500.0));

@@ -303,7 +303,6 @@ public class Drive extends SubsystemBase {
   }
   /** Sees if the robot is facing a Translation2d, with a tolerance. */
   public boolean isRobotFacingHub(Translation2d position) {
-
     double currentAngle = getPose().getRotation().getRadians();
     double targetAngle = getRotationToHub(position).getRadians();
     double delta = targetAngle - currentAngle;
@@ -339,8 +338,8 @@ public class Drive extends SubsystemBase {
     virtualHub.setPose(
         getVirtualHubPosition().getX(), getVirtualHubPosition().getY(), new Rotation2d());
 
-    SmartDashboard.putBoolean("IsRobotFacingVirtualHub", isRobotFacingVirtualHub());
-    SmartDashboard.putBoolean("canShootAtVirtualHub", canShootAtVirtualHub());
+    SmartDashboard.putBoolean("Robot Facing Hub", isRobotFacingVirtualHub());
+    SmartDashboard.putBoolean("Robot Can Shoot At Hub", canShootAtVirtualHub());
 
     updateRobotPose();
 

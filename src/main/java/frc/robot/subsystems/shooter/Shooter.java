@@ -75,12 +75,11 @@ public class Shooter extends SubsystemBase {
   }
   /** Cuts power to indexer motor and lets it freely rotate. */
   public void stopIndexer() {
-    indexerMotor.setVoltage(0);
+    setIndexerSpeed(0);
   }
   /** Cuts power to shooter motor and lets it freely rotate. */
   public void stopShooter() {
-    targetVelocity = 0;
-    shooterMotor.setControl(new com.ctre.phoenix6.controls.VoltageOut(0.0));
+    setShooterSpeed(0);
   }
   /** Cuts power to shooter and indexer motor. */
   public void stop() {
@@ -144,11 +143,13 @@ public class Shooter extends SubsystemBase {
 
   public void periodic() {
     SmartDashboard.putNumber("Shooter Current RPM", Math.round(getShooterSpeed()));
-    SmartDashboard.putNumber("Shooter Set Target RPM", getShooterTargetSpeed());
-    SmartDashboard.putNumber("Shooter Target RPM", getShooterManualSpeed());
-    SmartDashboard.putBoolean("Is Shooter At Speed", isShooterAtSpeed());
+    SmartDashboard.putNumber("Shooter Target RPM", getShooterTargetSpeed());
+    SmartDashboard.putNumber("Shooter Manual RPM", getShooterManualSpeed());
+    SmartDashboard.putBoolean("Shooter At Target Speed", isShooterAtSpeed());
     if (targetVelocity != 0) {
       shooterMotor.setControl(new com.ctre.phoenix6.controls.VelocityVoltage(targetVelocity / 60));
+    } else {
+      shooterMotor.setControl(new com.ctre.phoenix6.controls.VoltageOut(0.0));
     }
   }
 }
